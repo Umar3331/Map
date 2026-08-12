@@ -8,16 +8,18 @@ Each accepted decision applies until superseded by a later ADR.
 imports are prohibited; expansion requires later milestones.
 
 ## ADR-002 — iOS is initial consumer platform
-**Status:** Accepted. **Context:** The first intended consumer experience is on iPhone. **Decision:**
-Prioritize native iOS. **Consequences:** Android and web clients are out of scope.
+**Status:** Superseded by ADR-016. **Context:** The first intended consumer experience was an iPhone
+binary. **Decision:** Initially prioritize native iOS. **Consequences:** The prototype is preserved in
+`archive/ios-prototype`; it is not part of the active Milestone 1 build.
 
 ## ADR-003 — Windows is primary development environment
 **Status:** Accepted. **Context:** The primary machine runs Windows 11. **Decision:** PowerShell and
 Docker Desktop are the default workflow. **Consequences:** WSL may be optional, never mandatory.
 
 ## ADR-004 — SwiftUI native iOS client
-**Status:** Accepted. **Context:** A modern Apple-native interface is desired. **Decision:** Use
-SwiftUI. **Consequences:** Native platform expertise and a Mac are required for final builds.
+**Status:** Superseded by ADR-016. **Context:** A modern Apple-native interface was initially desired.
+**Decision:** The first prototype used SwiftUI. **Consequences:** Source is archived for possible
+future evaluation; no native Swift work belongs to Milestone 1 unless explicitly requested.
 
 ## ADR-005 — MapLibre
 **Status:** Accepted. **Context:** The client needs an open map renderer with vector support.
@@ -52,8 +54,9 @@ provision AWS in Milestone 1. **Consequences:** Preserve portable boundaries wit
 Keep them in one repository. **Consequences:** Directory boundaries and shared documentation matter.
 
 ## ADR-013 — Physical iOS builds require macOS/Xcode
-**Status:** Accepted. **Context:** Native Apple tooling does not run on Windows. **Decision:** Maintain
-source on Windows and build/sign on macOS. **Consequences:** Windows validation cannot claim a build.
+**Status:** Accepted, no longer a Milestone 1 blocker. **Context:** Native Apple tooling does not run
+on Windows. **Decision:** Native builds still require macOS if revisited. **Consequences:** The active
+PWA has no Xcode requirement.
 
 ## ADR-014 — Avoid Google Maps dependency
 **Status:** Accepted. **Context:** Local data control is a core architectural goal. **Decision:** Do not
@@ -63,3 +66,17 @@ depend on Google Maps. **Consequences:** We own MapLibre styles, tiles, and OSM 
 **Status:** Accepted. **Context:** Milestone 1 needs a small PostGIS-to-vector-tile path. **Decision:**
 Use Martin with PostGIS table discovery. **Consequences:** Operations stay simple; richer cartography
 will require curated OSM import tables and styles later.
+
+## ADR-016 — PWA is the initial Map client
+**Status:** Accepted. **Context:** The complete active client must be developed, built, tested, and
+served from the Windows 11 primary machine while remaining installable on iPhone. **Decision:** Use
+React, TypeScript, Vite, MapLibre GL JS, and PWA web standards for Map v0.1. **Consequences:** The
+client is fully Windows-buildable, browser-testable, installable from iPhone Safari, and independent
+of Xcode. It is not a native App Store binary and some native APIs remain restricted. A native client
+can be introduced later without replacing the backend and geographic platform.
+
+## ADR-017 — Same-origin local web gateway
+**Status:** Accepted. **Context:** Hardcoded localhost URLs fail from physical phones and cross-origin
+configuration adds needless local complexity. **Decision:** Serve the PWA and proxy `/api` and
+`/tiles` through Caddy on one origin. **Consequences:** LAN setup is predictable; internal services
+remain isolated, while optional locally trusted HTTPS enables secure-context PWA features.

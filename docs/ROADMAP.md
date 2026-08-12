@@ -2,8 +2,9 @@
 
 No milestone has an arbitrary date.
 
-1. **Milestone 1 — Vilnius local mapping foundation.** Windows Compose, PostGIS, API, local vector
-   serving, OSM preparation, and native iOS source.
+1. **Milestone 1 — Vilnius PWA mapping foundation.** Acceptance requires Windows setup, Vilnius map
+   rendering, desktop and mobile Safari interaction, iPhone Home Screen installation, healthy API,
+   working PostGIS, and documented tile architecture.
 2. **Milestone 2 — Custom places and local business data.** Define provenance, ingestion, and a
    minimal place model.
 3. **Milestone 3 — Search/discovery.** Geographic and textual discovery over trusted place data.
@@ -15,3 +16,5 @@ No milestone has an arbitrary date.
 9. **Milestone 9 — Production AWS architecture.** Design production deployment and operations.
 10. **Milestone 10 — Lithuania.** Expand only after Vilnius quality is demonstrated.
 11. **Milestone 11 — Baltics.** Expand regionally with measured data quality.
+
+Native clients remain optional future evaluations, not blockers or assumed near-term milestones.
