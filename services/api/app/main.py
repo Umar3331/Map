@@ -1,7 +1,9 @@
 import os
 from urllib.parse import urlsplit
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, Response
+
+from app import mobileconfig
 
 app = FastAPI(title="Map API", version="0.1.0")
 
@@ -26,6 +28,24 @@ def health() -> dict[str, str]:
 @app.get("/api/v1/config")
 def config() -> dict:
     return VILNIUS
+
+
+@app.get("/local-ca.mobileconfig")
+def local_ca_mobileconfig() -> Response:
+    """Return an Apple profile containing only Caddy's current public root CA."""
+    try:
+        certificate_der = mobileconfig.load_ca_certificate_der()
+    except (OSError, ValueError) as error:
+        raise HTTPException(status_code=503, detail="Local CA certificate is not ready") from error
+
+    return Response(
+        content=mobileconfig.build_mobileconfig(certificate_der),
+        media_type="application/x-apple-aspen-config",
+        headers={
+            "Content-Disposition": 'attachment; filename="map-local-ca.mobileconfig"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @app.get("/api/v1/map/style.json")

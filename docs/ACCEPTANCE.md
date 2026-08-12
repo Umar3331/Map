@@ -19,7 +19,8 @@ must never be inferred from desktop emulation.
 ## Manual LAN and physical-iPhone checks
 
 - [ ] HTTPS opens successfully from another device on the same LAN.
-- [ ] The project-local public CA profile downloads and can be installed/trusted on the iPhone.
+- [ ] `/local-ca.mobileconfig` shows **Profile Downloaded** and **Map Local Development CA** can be
+  installed and trusted on the iPhone.
 - [ ] Map opens in iPhone Safari over the printed HTTPS URL without a certificate warning.
 - [ ] Safari can add Map to the iPhone Home Screen with **Open as Web App** enabled.
 - [ ] The installed Map launches in standalone mode rather than normal Safari chrome.

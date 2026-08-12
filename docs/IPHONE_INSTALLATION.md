@@ -6,6 +6,8 @@
 - the Windows 11 ROG laptop running Map;
 - both devices on the same trusted Wi-Fi network.
 
+The local CA profile is for the developer's personal test device only.
+
 ## Start Map on Windows
 
 ```powershell
@@ -24,26 +26,42 @@ Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway } |
 
 Use the active Wi-Fi adapter's private IPv4 address, such as `192.168.1.50` (example only).
 
-## Open and install
+## Install the preferred CA profile
 
-Ordinary testing works at `http://WINDOWS_LAN_IP:5173`. Service workers and browser geolocation need
-a secure context on a physical phone, so use the local HTTPS endpoint for a reliable installed PWA:
+Ordinary testing works at `http://WINDOWS_LAN_IP:5173`. Service workers and geolocation need a secure
+context on a physical phone, so use the local HTTPS endpoint for a reliable installed PWA:
 
-1. In iPhone Safari open `http://WINDOWS_LAN_IP:5173/local-ca.crt` and allow the profile download.
-2. Open Settings → General → VPN & Device Management and install the downloaded Caddy local CA.
-3. Open Settings → General → About → Certificate Trust Settings and enable full trust for that CA.
-4. In Safari open `https://WINDOWS_LAN_IP:8443` and confirm Map loads without a certificate warning.
-5. Tap Share/Menu → **Add to Home Screen**.
-6. Enable **Open as Web App** where shown, tap Add, then launch Map from the Home Screen.
+1. In iPhone Safari open the `iPhone CA profile` URL printed by `start.ps1`, for example
+   `http://WINDOWS_LAN_IP:5173/local-ca.mobileconfig`.
+2. Accept the **Profile Downloaded** prompt.
+3. Open Settings → General → VPN & Device Management.
+4. Select and install **Map Local Development CA**.
+5. Open Settings → General → About → Certificate Trust Settings.
+6. Enable full trust for **Map Local Development CA**.
+7. In Safari open `https://WINDOWS_LAN_IP:8443` and confirm Map loads without a certificate warning.
+8. Tap Share/Menu → **Add to Home Screen**.
+9. Enable **Open as Web App** where shown, tap Add, then launch Map from the Home Screen.
 
-This trusts only the project-local CA on your own device. It does not disable Safari security. Remove
-the profile when no longer needed. Private CA state stays in a Docker volume and is never committed.
+The generated profile contains only the active public root certificate and required Apple metadata.
+It contains no private key, password, credential, or secret. Trusting it does not disable Safari
+security. Private CA material remains in the persistent Docker volume and is never committed.
 
-The CA volume persists across ordinary container restarts and recreation, so the iPhone trust remains
-valid. If the laptop's LAN IP changes, rerun `setup.ps1` and then `start.ps1`. Setup refreshes an
-automatically managed IP-valued `MAP_HOST`, and Caddy issues a new leaf certificate for that IP using
-the same persistent CA; normally the CA profile does not need to be reinstalled. If `MAP_HOST` is an
-explicit hostname, setup preserves it and `start.ps1` warns when it differs from the detected IP.
+The CA volume persists across ordinary container restarts and recreation, so iPhone trust remains
+valid. If the laptop's LAN IP changes, rerun `setup.ps1` and `start.ps1`. Caddy issues a new leaf
+certificate for the new IP using the same CA, so the profile normally does not need to be reinstalled.
+If `MAP_HOST` is an explicit hostname, setup preserves it and start warns when it differs from the IP.
+
+### Advanced raw-certificate fallback
+
+`http://WINDOWS_LAN_IP:5173/local-ca.crt` remains available for certificate inspection and manual
+installation workflows. The `.mobileconfig` route is preferred because iPhone Safari recognizes it
+as an Apple configuration profile more reliably than a raw `.crt` download.
+
+## Remove the development CA
+
+After testing, open Settings → General → VPN & Device Management, select **Map Local Development
+CA**, and choose **Remove Profile**. Confirm it no longer appears under Certificate Trust Settings.
+This removes trust from the phone without altering Caddy's Windows-side Docker volume.
 
 ## Troubleshooting
 
@@ -52,11 +70,12 @@ explicit hostname, setup preserves it and `start.ps1` warns when it differs from
 - Allow inbound ports 5173 and 8443 only for Private networks in Windows Defender Firewall.
 - Confirm `docker compose ps` shows `web`, `api`, `tiles`, and `db` healthy.
 - Confirm Docker publishes `0.0.0.0:5173` and `0.0.0.0:8443`.
-- If HTTPS host changed, rerun setup/start and use the HTTPS URL they print. Reinstall the CA only
-  after intentionally deleting the `caddy-data` volume or if the downloaded CA actually changed.
+- If **Profile Downloaded** does not appear, use Safari rather than an embedded browser and confirm the
+  URL ends in `.mobileconfig` and returns HTTP 200 from Windows.
+- If HTTPS host changed, rerun setup/start and use the printed HTTPS URL. Reinstall the profile only
+  after intentionally deleting `caddy-data` or if the downloaded public CA actually changed.
 - For stale assets, close the Home Screen app, reload Safari, or remove and add the app again.
 - If the service worker remains stale, clear Safari website data for the LAN host and reinstall.
 - Do not use `localhost` on iPhone; it means the iPhone itself.
 
-Physical-iPhone behavior has to be confirmed on an actual device; automated Windows validation does
-not claim that step was performed.
+Physical-iPhone behavior must be confirmed on the actual device; Windows automation does not claim it.

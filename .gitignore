@@ -24,4 +24,5 @@ apps/ios/*.xcodeproj/xcuserdata/
 *.key
 *.pem
 local-ca.crt
+local-ca.mobileconfig
 root.crt

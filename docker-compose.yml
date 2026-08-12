@@ -27,6 +27,8 @@ services:
       TILE_PUBLIC_PORT: ${TILE_PUBLIC_PORT:-3000}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
+    volumes:
+      - caddy-data:/caddy-data:ro
     depends_on:
       db:
         condition: service_healthy
