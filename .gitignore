@@ -16,6 +16,7 @@ data/*.mbtiles
 data/*.pmtiles
 data/generated/
 data/cache/
+data/*.download*
 apps/ios/DerivedData/
 apps/ios/*.xcworkspace/xcuserdata/
 apps/ios/*.xcodeproj/xcuserdata/

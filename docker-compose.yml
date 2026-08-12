@@ -23,6 +23,18 @@ services:
     volumes:
       - rsa-pki-public:/pki/public:ro
 
+  osm-import:
+    image: iboates/osm2pgsql:2.2.0
+    profiles: ["tools"]
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./data:/data:ro
+      - ./infrastructure/local/osm:/config:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgis/postgis:17-3.5
     environment:
@@ -46,7 +58,6 @@ services:
       context: ./services/api
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      TILE_PUBLIC_PORT: ${TILE_PUBLIC_PORT:-3000}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
@@ -65,10 +76,13 @@ services:
 
   tiles:
     image: ghcr.io/maplibre/martin:1.11.0
+    command: ["--config", "/config/config.yaml"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
       - "127.0.0.1:${TILE_PORT:-3000}:3000"
+    volumes:
+      - ./infrastructure/local/martin:/config:ro
     depends_on:
       db:
         condition: service_healthy

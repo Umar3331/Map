@@ -33,3 +33,16 @@ real iPhone using `https://192.168.8.237:8443`.
 The final TLS compatibility setting is Caddy's `default_sni {$MAP_HOST}` plus
 `fallback_sni {$MAP_HOST}`. Both true no-SNI IP clients and clients with an unmatched connection
 hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 2026-08-13.
+
+## Milestone 1.1 draft acceptance
+
+- [x] Validated Lithuania PBF is extracted to the buffered Vilnius bounds with containerized Osmium.
+- [x] osm2pgsql flex import creates eight non-empty feature tables in the separate `osm` schema.
+- [x] Martin publishes and serves non-empty road, building, water, landuse, and place vector tiles.
+- [x] MapLibre style has no public OSM raster, Mapbox, glyph-provider, sprite-provider, or CDN URL.
+- [x] Frontend/API automated guards reject runtime external basemap URLs.
+- [x] Connected Windows full-stack health and local tile requests pass.
+- [ ] With laptop Internet disconnected but LAN active, visually verify five representative Vilnius
+  areas, labels, pan/zoom, API, and tiles in a desktop browser.
+- [ ] User verifies the self-hosted map on the physical iPhone with Internet unavailable but local
+  Wi-Fi/LAN active. Do not mark this passed based on desktop or automated testing.

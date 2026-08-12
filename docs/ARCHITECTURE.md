@@ -16,11 +16,20 @@ Windows loopback. Only Caddy's HTTP 5173 and HTTPS 8443 ports bind to the LAN.
 
 ## Map data
 
-The target is `OSM Lithuania extract → Vilnius filter → PostGIS → Martin → MapLibre GL JS`. The
-reproducible filter is `scripts/map-data.ps1`; PBFs, caches, and generated tiles are ignored. The
-current local vector proof serves the seeded Vilnius boundary. Detailed basemap tiles come from the
-public OSM raster endpoint as a **TEMPORARY DEVELOPMENT DEPENDENCY** until curated OSM import and
-styling are implemented. Attribution is mandatory.
+The implemented flow is `Geofabrik Lithuania PBF → Osmium buffered Vilnius extract → osm2pgsql flex
+output → osm schema → Martin → MapLibre GL JS`. `scripts/map-data.ps1` orchestrates the Windows
+workflow entirely through PowerShell and Docker. Downloaded PBFs and generated data are ignored.
+
+The `osm` schema separates imported geographic data from application tables. It contains
+`transportation`, `buildings`, `water`, `waterways`, `landuse`, `railways`, `boundaries`, and
+`places`. Martin publishes those tables as same-named vector sources while retaining the seeded
+`public.vilnius_boundary` source. Browser access remains only through Caddy's `/tiles/*` route.
+
+The MapLibre style contains only relative, same-origin vector tile URLs. It intentionally omits a
+`glyphs` URL: MapLibre GL JS 6 uses locally available browser fonts in that mode, so street and place
+labels do not require a font CDN. No sprite is used. The only external basemap dependency is the
+one-time or explicit-update Geofabrik download; runtime basemap dependencies are local. OSM
+attribution is mandatory.
 
 ## PWA and HTTPS
 

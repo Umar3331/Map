@@ -26,15 +26,31 @@ def test_config_is_vilnius_only() -> None:
     assert payload["bounding_box"]["west"] < payload["bounding_box"]["east"]
 
 
-def test_style_uses_request_host_for_tiles() -> None:
-    response = client.get("/api/v1/map/style.json", headers={"host": "192.168.1.10:8000"})
+def test_style_uses_only_same_origin_local_tiles() -> None:
+    response = client.get("/api/v1/map/style.json")
     assert response.status_code == 200
-    tiles = response.json()["sources"]["vilnius"]["tiles"]
-    assert tiles == ["http://192.168.1.10:3000/vilnius_boundary/{z}/{x}/{y}"]
-    assert response.json()["center"] == [
+    style = response.json()
+    assert style["center"] == [
         VILNIUS["center"]["longitude"],
         VILNIUS["center"]["latitude"],
     ]
+    assert set(style["sources"]) == {
+        "landuse",
+        "water",
+        "buildings",
+        "waterways",
+        "boundaries",
+        "railways",
+        "transportation",
+        "places",
+    }
+    for name, source in style["sources"].items():
+        assert source["tiles"] == [f"/tiles/{name}/{{z}}/{{x}}/{{y}}"]
+    serialized = response.text.lower()
+    assert "tile.openstreetmap.org" not in serialized
+    assert "mapbox" not in serialized
+    assert "http://" not in serialized
+    assert "https://" not in serialized
 
 
 def test_mobileconfig_contains_only_public_ca_chain(monkeypatch) -> None:

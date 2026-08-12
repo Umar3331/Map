@@ -92,3 +92,15 @@ volumes, configure a distinct Caddy CA ID, and select the `MAP_HOST` certificate
 before installing the RSA profile. IP clients that omit SNI receive the active IP-SAN leaf. Private
 keys remain local and uncommitted; this compatibility choice applies only to local development and
 does not define future production PKI.
+
+## ADR-019 — Curated osm2pgsql flex schema for the Vilnius basemap
+**Status:** Accepted. **Context:** Milestone 1's public OSM raster endpoint prevented offline runtime
+and the full OpenMapTiles stack would add unnecessary services and operational weight for one city.
+**Decision:** Download Geofabrik's Lithuania PBF only at preparation/update time, extract a buffered
+Vilnius bounding box with containerized Osmium, and import selected map features through an
+osm2pgsql flex configuration into a dedicated `osm` schema. Martin publishes those PostGIS tables
+as vector sources and MapLibre owns the local style. Labels use MapLibre GL JS local browser fonts;
+no glyph URL or sprite is configured. **Consequences:** Runtime has no public basemap dependency and
+the normal Windows workflow stays PowerShell plus Docker. Cartography is intentionally lightweight,
+the extract is rectangular rather than an exact municipal polygon, data updates are manual with
+`map-data.ps1 -Update`, and OSM attribution/ODbL obligations remain.

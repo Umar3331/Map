@@ -28,7 +28,9 @@ flowchart LR
     P -->|"same origin /tiles"| T["Martin"]
     A --> D["PostgreSQL + PostGIS"]
     T --> D
-    O["OpenStreetMap / Vilnius"] --> T
+    O["Geofabrik Lithuania PBF<br/>download/update only"] --> X["Osmium Vilnius extract"]
+    X --> G["osm2pgsql flex import"]
+    G --> D
     I["iPhone Safari / installed PWA"] -->|"same Wi-Fi"| P
 ```
 
@@ -45,6 +47,7 @@ git clone https://github.com/Umar3331/Map.git
 cd Map
 Copy-Item .env.example .env
 .\scripts\setup.ps1
+.\scripts\map-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 ```
@@ -55,15 +58,14 @@ URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 Milestone 1 acceptance, including physical-iPhone HTTPS and interaction, is complete and recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
-## Map-data status
+## Self-hosted Vilnius map data
 
-The seeded Vilnius boundary vector layer is local and self-hosted through PostGIS and Martin. The
-detailed visual basemap currently uses OpenStreetMap's public raster tile server as a **TEMPORARY
-DEVELOPMENT DEPENDENCY**. The target remains filtered Vilnius OSM data served locally; large source
-extracts and generated artifacts are ignored by Git. OSM attribution remains visible.
-
-The next milestone is **Milestone 1.1 — Fully self-hosted Vilnius basemap**. It will replace the
-public raster dependency on its own branch and pull request.
+`scripts/map-data.ps1` downloads Geofabrik's Lithuania PBF when it is missing, validates it, extracts
+a buffered Vilnius bounding box with Osmium, and imports a curated vector schema with osm2pgsql. The
+PBF download is an update-time dependency only. At runtime, MapLibre requests roads, buildings,
+water, landuse, rail, boundaries, waterways, and place labels from Martin through same-origin
+`/tiles/*` routes. No public basemap, glyph, sprite, or CDN request is required. All PBFs and generated
+data remain local and ignored by Git; OpenStreetMap attribution remains visible.
 
 ## Repository
 
