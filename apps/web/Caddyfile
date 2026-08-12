@@ -1,0 +1,43 @@
+(map_site) {
+    encode zstd gzip
+
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    handle /health {
+        reverse_proxy api:8000
+    }
+
+    handle_path /tiles/* {
+        reverse_proxy tiles:3000
+    }
+
+    handle /local-ca.crt {
+        root * /data/caddy/pki/authorities/local
+        rewrite * /root.crt
+        header Content-Type application/x-x509-ca-cert
+        file_server
+    }
+
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        Permissions-Policy "geolocation=(self)"
+    }
+}
+
+:5173 {
+    import map_site
+}
+
+https://{$MAP_HOST:localhost}:8443 {
+    tls internal
+    import map_site
+}
