@@ -8,13 +8,13 @@ from pathlib import Path
 ROOT_CA_CERTIFICATE_PATH = Path(
     os.getenv(
         "ROOT_CA_CERTIFICATE_PATH",
-        "/caddy-data/caddy/pki/authorities/local/root.crt",
+        "/local-pki/root.crt",
     )
 )
 INTERMEDIATE_CA_CERTIFICATE_PATH = Path(
     os.getenv(
         "INTERMEDIATE_CA_CERTIFICATE_PATH",
-        "/caddy-data/caddy/pki/authorities/local/intermediate.crt",
+        "/local-pki/intermediate.crt",
     )
 )
 PROFILE_IDENTIFIER = "com.map.local.ca"

@@ -23,6 +23,8 @@ if ($Health.status -ne 'ok' -or $Profile.StatusCode -ne 200) {
     throw "Map or its iPhone CA profile did not become ready within $TimeoutSeconds seconds. Run 'docker compose logs web api'."
 }
 
+& "$PSScriptRoot\validate-rsa-pki.ps1"
+
 Write-Host 'Map services are ready.' -ForegroundColor Green
 Write-Host 'Map:      http://localhost:5173'
 Write-Host 'API docs: http://localhost:8000/docs'

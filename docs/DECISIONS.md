@@ -81,3 +81,12 @@ can be introduced later without replacing the backend and geographic platform.
 configuration adds needless local complexity. **Decision:** Serve the PWA and proxy `/api` and
 `/tiles` through Caddy on one origin. **Consequences:** LAN setup is predictable; internal services
 remain isolated, while optional locally trusted HTTPS enables secure-context PWA features.
+
+## ADR-018 — Dedicated RSA local development PKI
+**Status:** Accepted. **Context:** A physical iPhone could not establish TLS with Caddy's otherwise
+valid default ECC local chain after the root and intermediate were installed and the root was fully
+trusted. **Decision:** Use a dedicated persistent RSA-2048 root, RSA-2048 intermediate, and RSA-2048
+Caddy leaf for local iPhone HTTPS. Keep public certificates and private keys in separate Docker named
+volumes and configure a distinct Caddy CA ID. **Consequences:** Existing ECC profiles must be removed
+before installing the RSA profile. Private keys remain local and uncommitted; this compatibility
+choice applies only to local development and does not define future production PKI.

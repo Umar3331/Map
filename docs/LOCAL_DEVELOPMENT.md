@@ -36,6 +36,7 @@ npm.cmd test
 npm.cmd run build
 cd ..\..
 docker compose config --quiet
+.\scripts\validate-rsa-pki.ps1
 ```
 
 Use `.\scripts\map-data.ps1 -Download` to create an ignored Vilnius PBF from the current Lithuania

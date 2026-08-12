@@ -1,49 +1,74 @@
+{
+	skip_install_trust
+
+	pki {
+		ca map_rsa {
+			name "Map Local Development CA"
+			root {
+				format pem_file
+				cert /pki/public/root.crt
+				key /pki/private/root.key
+			}
+			intermediate {
+				format pem_file
+				cert /pki/public/intermediate.crt
+				key /pki/private/intermediate.key
+			}
+		}
+	}
+}
+
 (map_site) {
-    encode zstd gzip
+	encode zstd gzip
 
-    handle /api/* {
-        reverse_proxy api:8000
-    }
+	handle /api/* {
+		reverse_proxy api:8000
+	}
 
-    handle /health {
-        reverse_proxy api:8000
-    }
+	handle /health {
+		reverse_proxy api:8000
+	}
 
-    handle_path /tiles/* {
-        reverse_proxy tiles:3000
-    }
+	handle_path /tiles/* {
+		reverse_proxy tiles:3000
+	}
 
-    handle /local-ca.crt {
-        root * /data/caddy/pki/authorities/local
-        rewrite * /root.crt
-        header Content-Type application/x-x509-ca-cert
-        header Content-Disposition "attachment; filename=map-local-ca.crt"
-        header Cache-Control "no-store"
-        file_server
-    }
+	handle /local-ca.crt {
+		root * /pki/public
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		header Content-Disposition "attachment; filename=map-local-ca.crt"
+		header Cache-Control "no-store"
+		file_server
+	}
 
-    handle /local-ca.mobileconfig {
-        reverse_proxy api:8000
-    }
+	handle /local-ca.mobileconfig {
+		reverse_proxy api:8000
+	}
 
-    handle {
-        root * /srv
-        try_files {path} /index.html
-        file_server
-    }
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
 
-    header {
-        X-Content-Type-Options nosniff
-        Referrer-Policy no-referrer
-        Permissions-Policy "geolocation=(self)"
-    }
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		Permissions-Policy "geolocation=(self)"
+	}
 }
 
 :5173 {
-    import map_site
+	import map_site
 }
 
 https://{$MAP_HOST:localhost}:8443 {
-    tls internal
-    import map_site
+	tls {
+		issuer internal {
+			ca map_rsa
+		}
+		key_type rsa2048
+	}
+	import map_site
 }

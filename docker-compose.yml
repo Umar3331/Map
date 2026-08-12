@@ -1,6 +1,25 @@
 name: map-platform
 
 services:
+  rsa-pki:
+    image: map-platform-rsa-pki
+    build:
+      context: ./infrastructure/local/pki
+    command: generate
+    volumes:
+      - rsa-pki-public:/pki/public
+      - rsa-pki-private:/pki/private
+    restart: "no"
+
+  rsa-pki-validator:
+    image: map-platform-rsa-pki
+    profiles: ["tools"]
+    command: validate
+    environment:
+      MAP_HOST: ${MAP_HOST:-localhost}
+    volumes:
+      - rsa-pki-public:/pki/public:ro
+
   db:
     image: postgis/postgis:17-3.5
     environment:
@@ -28,8 +47,10 @@ services:
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
-      - caddy-data:/caddy-data:ro
+      - rsa-pki-public:/local-pki:ro
     depends_on:
+      rsa-pki:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     healthcheck:
@@ -61,7 +82,11 @@ services:
     volumes:
       - caddy-data:/data
       - caddy-config:/config
+      - rsa-pki-public:/pki/public:ro
+      - rsa-pki-private:/pki/private:ro
     depends_on:
+      rsa-pki:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
       tiles:
@@ -77,3 +102,5 @@ volumes:
   postgis-data:
   caddy-data:
   caddy-config:
+  rsa-pki-public:
+  rsa-pki-private:

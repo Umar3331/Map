@@ -1,0 +1,53 @@
+name: Local RSA PKI CI
+
+on:
+  push:
+    paths:
+      - ".github/workflows/local-pki-ci.yml"
+      - "apps/web/Caddyfile"
+      - "docker-compose.yml"
+      - "infrastructure/local/pki/**"
+      - "scripts/validate-rsa-pki.ps1"
+      - "services/api/app/mobileconfig.py"
+  pull_request:
+    paths:
+      - ".github/workflows/local-pki-ci.yml"
+      - "apps/web/Caddyfile"
+      - "docker-compose.yml"
+      - "infrastructure/local/pki/**"
+      - "scripts/validate-rsa-pki.ps1"
+      - "services/api/app/mobileconfig.py"
+
+permissions:
+  contents: read
+
+jobs:
+  live-rsa-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+      - run: docker compose up --build -d
+      - name: Wait for gateway
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:5173/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Reject EC leaf and verify the active RSA chain
+        shell: pwsh
+        run: ./scripts/validate-rsa-pki.ps1
+      - name: Verify gateway routes
+        run: |
+          curl --fail http://localhost:5173/
+          curl --fail http://localhost:5173/health
+          curl --fail http://localhost:5173/api/v1/config
+          curl --fail http://localhost:5173/tiles/vilnius_boundary/0/0/0 --output /dev/null
+      - if: always()
+        run: docker compose logs rsa-pki web api tiles db
+      - if: always()
+        run: docker compose down --volumes

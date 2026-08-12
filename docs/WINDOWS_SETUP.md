@@ -25,17 +25,18 @@ Copy-Item .env.example .env
 ```
 
 `setup.ps1` validates Git, Docker, Compose, the environment, and detects a LAN address for local
-HTTPS. `start.ps1` builds and waits for the gateway, then prints desktop, LAN, HTTPS, and certificate
+HTTPS. `start.ps1` creates or reuses the persistent RSA development PKI, builds and waits for the
+gateway, validates the active RSA leaf and chain, then prints desktop, LAN, HTTPS, and certificate
 URLs. Stop with `.\scripts\stop.ps1`.
 
 ## Operations and troubleshooting
 
 - State: `docker compose ps`
-- Logs: `docker compose logs -f web api tiles db`
+- Logs: `docker compose logs -f rsa-pki web api tiles db`
 - Port conflict: update the appropriate value in `.env` and keep documented URLs aligned.
 - Stale PWA: reload Safari, remove/re-add the Home Screen app, or clear website data.
-- Database reset: `.\scripts\stop.ps1 -RemoveVolumes` permanently deletes local PostGIS and Caddy CA
-  state; rerun setup/start afterward.
+- Full local-state reset: `.\scripts\stop.ps1 -RemoveVolumes` permanently deletes local PostGIS,
+  Caddy, and Map RSA PKI state; rerun setup/start afterward and reinstall the iPhone profile.
 - Docker failure: start Docker Desktop and wait for `docker info` to succeed.
 
 For another device, allow inbound TCP 5173 (and 8443 for HTTPS) only on the Windows Defender Firewall

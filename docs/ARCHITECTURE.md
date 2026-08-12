@@ -30,14 +30,19 @@ local HTTPS using its private CA. A physical iPhone must explicitly install and 
 using the HTTPS endpoint; no browser security is disabled and no certificate/private key is committed.
 See `docs/IPHONE_INSTALLATION.md`.
 
-Caddy issues the HTTPS leaf certificate for the exact `MAP_HOST` value. Its public CA certificate is
-available at the exact `/local-ca.crt` fallback route. The preferred `/local-ca.mobileconfig` route is
-proxied to FastAPI, which reads the public `root.crt` and `intermediate.crt` through a read-only
-`caddy-data` mount and dynamically creates an Apple certificate profile for the complete CA chain.
-Stable profile and payload UUIDs derive from the public certificate fingerprints, so the response is
-reproducible and automatically follows CA recreation. Neither route can expose a CA private key. CA
-and leaf-key state live under `/data` in the persistent `caddy-data` volume, and no Caddy state is
-bind-mounted into the repository.
+Caddy issues an RSA-2048 HTTPS leaf certificate for the exact `MAP_HOST` value through the dedicated
+`map_rsa` internal CA. A one-shot Compose service creates a persistent RSA-2048 root and intermediate
+in separate named volumes: `rsa-pki-public` contains only certificates, while `rsa-pki-private`
+contains the CA keys and is mounted only by the generator and Caddy. The API receives only the public
+volume. This separate CA ID and storage prevent Caddy's earlier default ECC CA or cached ECC leaf from
+being selected.
+
+The public root is available at the exact `/local-ca.crt` fallback route. The preferred
+`/local-ca.mobileconfig` route is proxied to FastAPI, which reads the public `root.crt` and
+`intermediate.crt` and dynamically creates an Apple certificate profile for the complete CA chain.
+Stable profile and payload UUIDs derive from the public certificate fingerprints. Neither HTTP route
+can read or expose a CA private key. Caddy's managed RSA leaf state remains under `/data` in the
+persistent `caddy-data` volume, and no PKI state is bind-mounted into the repository.
 
 ## Configuration and persistence
 
