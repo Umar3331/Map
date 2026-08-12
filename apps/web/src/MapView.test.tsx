@@ -34,7 +34,15 @@ it('initializes and cleans up MapLibre with the Vilnius center', () => {
     />,
   )
 
-  expect(mapConstructor).toHaveBeenCalledWith(expect.objectContaining({ center: [25.2797, 54.6872] }))
+  expect(mapConstructor).toHaveBeenCalledWith(
+    expect.objectContaining({
+      center: [25.2797, 54.6872],
+      maxBounds: [
+        [25.1, 54.55],
+        [25.5, 54.85],
+      ],
+    }),
+  )
   expect(addControl).toHaveBeenCalledTimes(3)
   unmount()
   expect(remove).toHaveBeenCalledOnce()

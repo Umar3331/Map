@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import VILNIUS, app
 
 client = TestClient(app)
 
@@ -26,3 +26,7 @@ def test_style_uses_request_host_for_tiles() -> None:
     assert response.status_code == 200
     tiles = response.json()["sources"]["vilnius"]["tiles"]
     assert tiles == ["http://192.168.1.10:3000/vilnius_boundary/{z}/{x}/{y}"]
+    assert response.json()["center"] == [
+        VILNIUS["center"]["longitude"],
+        VILNIUS["center"]["latitude"],
+    ]

@@ -11,6 +11,7 @@ type MapViewProps = {
 
 export function MapView({ config }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const regionName = config.region.charAt(0).toUpperCase() + config.region.slice(1)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -22,8 +23,8 @@ export function MapView({ config }: MapViewProps) {
       zoom: 11.4,
       minZoom: 8,
       maxBounds: [
-        [24.75, 54.35],
-        [25.85, 55.05],
+        [config.bounding_box.west, config.bounding_box.south],
+        [config.bounding_box.east, config.bounding_box.north],
       ],
       attributionControl: false,
     })
@@ -46,5 +47,5 @@ export function MapView({ config }: MapViewProps) {
     return () => map.remove()
   }, [config])
 
-  return <div ref={containerRef} className="map-canvas" aria-label="Interactive map of Vilnius" />
+  return <div ref={containerRef} className="map-canvas" aria-label={`Interactive map of ${regionName}`} />
 }

@@ -34,10 +34,12 @@ def map_style(request: Request) -> dict:
     hostname = urlsplit(str(request.base_url)).hostname or "localhost"
     tile_port = os.getenv("TILE_PUBLIC_PORT", "3000")
     tiles = f"http://{hostname}:{tile_port}/vilnius_boundary/{{z}}/{{x}}/{{y}}"
+    center = VILNIUS["center"]
+    region_name = str(VILNIUS["region"]).title()
     return {
         "version": 8,
-        "name": "Map Local Vilnius",
-        "center": [25.2797, 54.6872],
+        "name": f"Map Local {region_name}",
+        "center": [center["longitude"], center["latitude"]],
         "zoom": 10,
         "sources": {
             "vilnius": {
