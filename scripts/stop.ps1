@@ -6,7 +6,7 @@ $RepositoryRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepositoryRoot
 
 if ($RemoveVolumes) {
-    Write-Warning 'Removing containers and the persistent local PostGIS volume.'
+    Write-Warning 'Removing containers plus the persistent PostGIS, Caddy, and Map RSA PKI volumes.'
     docker compose down --volumes
 } else {
     docker compose down

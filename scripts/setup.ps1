@@ -25,6 +25,27 @@ if (-not (Test-Path '.env')) {
 }
 
 New-Item -ItemType Directory -Force -Path 'data\generated', 'data\cache' | Out-Null
+
+$EnvValues = @{}
+Get-Content '.env' | Where-Object { $_ -match '^([^#=]+)=(.*)$' } | ForEach-Object {
+    $EnvValues[$Matches[1]] = $Matches[2]
+}
+$LanAddress = Get-NetIPConfiguration -ErrorAction SilentlyContinue |
+    Where-Object { $_.NetAdapter.Status -eq 'Up' -and $_.IPv4DefaultGateway -and $_.IPv4Address } |
+    Select-Object -First 1 -ExpandProperty IPv4Address |
+    Select-Object -ExpandProperty IPAddress
+$ConfiguredMapHost = if ($EnvValues.ContainsKey('MAP_HOST')) { $EnvValues['MAP_HOST'] } else { '' }
+$MapHostIsAutomaticallyManaged = $ConfiguredMapHost -match '^(localhost|(?:\d{1,3}\.){3}\d{1,3})$'
+if ($LanAddress -and ($MapHostIsAutomaticallyManaged -or -not $ConfiguredMapHost)) {
+    if ($ConfiguredMapHost -ne $LanAddress) {
+        if ($EnvValues.ContainsKey('MAP_HOST')) {
+            (Get-Content '.env') -replace '^MAP_HOST=.*$', "MAP_HOST=$LanAddress" | Set-Content '.env'
+        } else {
+            Add-Content '.env' "`nMAP_HOST=$LanAddress"
+        }
+        Write-Host "Configured local HTTPS host as $LanAddress."
+    }
+}
 docker compose config --quiet
 if ($LASTEXITCODE -ne 0) { throw 'Docker Compose configuration is invalid.' }
 
