@@ -89,4 +89,5 @@ This removes trust from the phone without altering the Windows-side Map RSA Dock
 - If the service worker remains stale, clear Safari website data for the LAN host and reinstall.
 - Do not use `localhost` on iPhone; it means the iPhone itself.
 
-Physical-iPhone behavior must be confirmed on the actual device; Windows automation does not claim it.
+Physical-iPhone acceptance passed on 2026-08-13 at `https://192.168.8.237:8443`: the trusted RSA
+profile produced warning-free HTTPS and Map rendered successfully in Safari.

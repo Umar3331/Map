@@ -2,7 +2,7 @@
 
 ## Local system
 
-Docker Compose runs four services on one private network:
+Docker Compose runs four long-lived services plus a one-shot RSA PKI generator on one private network:
 
 - `web`: Caddy serving the built PWA on HTTP 5173 and optional local HTTPS 8443;
 - `api`: FastAPI on 8000;
@@ -51,8 +51,9 @@ persistent `caddy-data` volume, and no PKI state is bind-mounted into the reposi
 ## Configuration and persistence
 
 `.env` owns ports and `MAP_HOST`; it is never committed. `setup.ps1` detects an active LAN address
-when possible. PostGIS and Caddy CA state use named Docker volumes. Geolocation is handled entirely by
-the browser, requested only through MapLibre's control, not continuously tracked, stored, or sent.
+when possible. PostGIS, Caddy leaf state, and the separated public/private RSA CA state use named
+Docker volumes. Geolocation is handled entirely by the browser, requested only through MapLibre's
+control, not continuously tracked, stored, or sent.
 
 ## Future cloud boundaries
 

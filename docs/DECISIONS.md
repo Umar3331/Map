@@ -87,6 +87,8 @@ remain isolated, while optional locally trusted HTTPS enables secure-context PWA
 valid default ECC local chain after the root and intermediate were installed and the root was fully
 trusted. **Decision:** Use a dedicated persistent RSA-2048 root, RSA-2048 intermediate, and RSA-2048
 Caddy leaf for local iPhone HTTPS. Keep public certificates and private keys in separate Docker named
-volumes and configure a distinct Caddy CA ID. **Consequences:** Existing ECC profiles must be removed
-before installing the RSA profile. Private keys remain local and uncommitted; this compatibility
-choice applies only to local development and does not define future production PKI.
+volumes, configure a distinct Caddy CA ID, and select the `MAP_HOST` certificate through Caddy's
+`default_sni` and `fallback_sni` options. **Consequences:** Existing ECC profiles must be removed
+before installing the RSA profile. IP clients that omit SNI receive the active IP-SAN leaf. Private
+keys remain local and uncommitted; this compatibility choice applies only to local development and
+does not define future production PKI.

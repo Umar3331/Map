@@ -2,9 +2,9 @@
 
 No milestone has an arbitrary date.
 
-1. **Milestone 1 — Vilnius PWA mapping foundation.** Acceptance requires Windows setup, Vilnius map
-   rendering, desktop and mobile Safari interaction, iPhone Home Screen installation, healthy API,
-   working PostGIS, and documented tile architecture. See `docs/ACCEPTANCE.md`.
+1. **Milestone 1 — Vilnius PWA mapping foundation (complete).** Windows setup, Vilnius rendering,
+   physical-iPhone Safari interaction and trusted HTTPS, PWA installation, API, PostGIS, and the tile
+   architecture passed acceptance on 2026-08-13. See `docs/ACCEPTANCE.md`.
 2. **Milestone 1.1 — Fully self-hosted Vilnius basemap.** Replace
    `https://tile.openstreetmap.org/...` with locally processed and served Vilnius OSM data. Target
    flow: `OSM extract → filtered Vilnius data → local processing → PostGIS/vector tiles → Martin →

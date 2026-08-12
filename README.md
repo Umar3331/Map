@@ -52,7 +52,8 @@ Copy-Item .env.example .env
 Open `http://localhost:5173`. The start script also prints the active LAN URL and optional HTTPS PWA
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
-Milestone 1 merge acceptance is tracked in [the acceptance checklist](docs/ACCEPTANCE.md).
+Milestone 1 acceptance, including physical-iPhone HTTPS and interaction, is complete and recorded in
+[the acceptance checklist](docs/ACCEPTANCE.md).
 
 ## Map-data status
 
@@ -61,8 +62,8 @@ detailed visual basemap currently uses OpenStreetMap's public raster tile server
 DEVELOPMENT DEPENDENCY**. The target remains filtered Vilnius OSM data served locally; large source
 extracts and generated artifacts are ignored by Git. OSM attribution remains visible.
 
-The immediate next milestone is **Milestone 1.1 — Fully self-hosted Vilnius basemap**. It will replace
-the public raster dependency; this PR intentionally does not implement that work.
+The next milestone is **Milestone 1.1 — Fully self-hosted Vilnius basemap**. It will replace the
+public raster dependency on its own branch and pull request.
 
 ## Repository
 
