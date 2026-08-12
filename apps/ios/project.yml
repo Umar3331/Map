@@ -1,0 +1,26 @@
+name: Map
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-native-distribution
+    from: 6.17.0
+targets:
+  Map:
+    type: application
+    platform: iOS
+    sources: [Map]
+    dependencies:
+      - package: MapLibre
+        product: MapLibre
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.map
+        INFOPLIST_KEY_CFBundleDisplayName: Map
+        INFOPLIST_KEY_API_BASE_URL: http://127.0.0.1:8000
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: Map connects to the local development server for Vilnius map data.
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: true
+        GENERATE_INFOPLIST_FILE: true
+        SWIFT_VERSION: 5.0
