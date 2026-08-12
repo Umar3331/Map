@@ -29,22 +29,27 @@ Use the active Wi-Fi adapter's private IPv4 address, such as `192.168.1.50` (exa
 ## Install the preferred CA profile
 
 Ordinary testing works at `http://WINDOWS_LAN_IP:5173`. Service workers and geolocation need a secure
-context on a physical phone, so use the local HTTPS endpoint for a reliable installed PWA:
+context on a physical phone, so use the local HTTPS endpoint for a reliable installed PWA. If you
+installed an earlier Map profile that contained only the root CA, remove it before continuing:
 
-1. In iPhone Safari open the `iPhone CA profile` URL printed by `start.ps1`, for example
+1. Open Settings → General → VPN & Device Management, select the existing
+   **Map Local Development CA**, and tap **Remove Profile**. Skip this step if no Map profile exists.
+2. In iPhone Safari open the `iPhone CA profile` URL printed by `start.ps1`, for example
    `http://WINDOWS_LAN_IP:5173/local-ca.mobileconfig`.
-2. Accept the **Profile Downloaded** prompt.
-3. Open Settings → General → VPN & Device Management.
-4. Select and install **Map Local Development CA**.
-5. Open Settings → General → About → Certificate Trust Settings.
-6. Enable full trust for **Map Local Development CA**.
-7. In Safari open `https://WINDOWS_LAN_IP:8443` and confirm Map loads without a certificate warning.
-8. Tap Share/Menu → **Add to Home Screen**.
-9. Enable **Open as Web App** where shown, tap Add, then launch Map from the Home Screen.
+3. Accept the **Profile Downloaded** prompt.
+4. Open Settings → General → VPN & Device Management.
+5. Select and install **Map Local Development CA**.
+6. Open Settings → General → About → Certificate Trust Settings.
+7. Enable full trust for the **Map Local Development CA** root certificate.
+8. In Safari retry `https://WINDOWS_LAN_IP:8443` and confirm Map loads without a certificate warning.
+9. Tap Share/Menu → **Add to Home Screen**.
+10. Enable **Open as Web App** where shown, tap Add, then launch Map from the Home Screen.
 
-The generated profile contains only the active public root certificate and required Apple metadata.
-It contains no private key, password, credential, or secret. Trusting it does not disable Safari
-security. Private CA material remains in the persistent Docker volume and is never committed.
+The generated profile contains only the active public root and intermediate CA certificates plus
+required Apple metadata. Certificate payloads contain binary DER bytes represented as base64 plist
+data, not nested PEM text. The profile contains no private key, password, credential, or secret.
+Trusting it does not disable Safari security. Private CA material remains in the persistent Docker
+volume and is never committed.
 
 The CA volume persists across ordinary container restarts and recreation, so iPhone trust remains
 valid. If the laptop's LAN IP changes, rerun `setup.ps1` and `start.ps1`. Caddy issues a new leaf

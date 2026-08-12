@@ -1,4 +1,6 @@
+import hashlib
 import plistlib
+import uuid
 
 from fastapi.testclient import TestClient
 
@@ -35,9 +37,14 @@ def test_style_uses_request_host_for_tiles() -> None:
     ]
 
 
-def test_mobileconfig_contains_only_public_certificate(monkeypatch) -> None:
-    certificate_der = b"\x30\x05\x02\x03map"
-    monkeypatch.setattr(mobileconfig, "load_ca_certificate_der", lambda: certificate_der)
+def test_mobileconfig_contains_only_public_ca_chain(monkeypatch) -> None:
+    root_der = b"\x30\x05\x02\x03root"
+    intermediate_der = b"\x30\x0d\x02\x0bintermediate"
+    monkeypatch.setattr(
+        mobileconfig,
+        "load_ca_certificates_der",
+        lambda: (root_der, intermediate_der),
+    )
 
     first_response = client.get("/local-ca.mobileconfig")
     second_response = client.get("/local-ca.mobileconfig")
@@ -52,9 +59,33 @@ def test_mobileconfig_contains_only_public_certificate(monkeypatch) -> None:
     assert b"PRIVATE KEY" not in first_response.content
 
     profile = plistlib.loads(first_response.content)
-    certificate_payload = profile["PayloadContent"][0]
+    certificate_payloads = profile["PayloadContent"]
     assert profile["PayloadIdentifier"] == "com.map.local.ca"
     assert profile["PayloadDisplayName"] == "Map Local Development CA"
-    assert certificate_payload["PayloadType"] == "com.apple.security.root"
-    assert certificate_payload["PayloadContent"] == certificate_der
+    assert len(certificate_payloads) == 2
+    assert [payload["PayloadIdentifier"] for payload in certificate_payloads] == [
+        "com.map.local.ca.root",
+        "com.map.local.ca.intermediate",
+    ]
+    assert [payload["PayloadType"] for payload in certificate_payloads] == [
+        "com.apple.security.root",
+        "com.apple.security.pkcs1",
+    ]
+    assert [payload["PayloadContent"] for payload in certificate_payloads] == [
+        root_der,
+        intermediate_der,
+    ]
+    assert len({payload["PayloadUUID"] for payload in certificate_payloads}) == 2
+    for role, payload, certificate_der in zip(
+        ("root", "intermediate"),
+        certificate_payloads,
+        (root_der, intermediate_der),
+        strict=True,
+    ):
+        fingerprint = hashlib.sha256(certificate_der).hexdigest()
+        expected_uuid = uuid.uuid5(
+            uuid.NAMESPACE_URL,
+            f"com.map.local.ca:{role}:{fingerprint}",
+        )
+        assert payload["PayloadUUID"] == str(expected_uuid).upper()
     assert first_response.content == second_response.content

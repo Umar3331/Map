@@ -32,14 +32,17 @@ def config() -> dict:
 
 @app.get("/local-ca.mobileconfig")
 def local_ca_mobileconfig() -> Response:
-    """Return an Apple profile containing only Caddy's current public root CA."""
+    """Return an Apple profile containing Caddy's current public CA chain."""
     try:
-        certificate_der = mobileconfig.load_ca_certificate_der()
+        root_der, intermediate_der = mobileconfig.load_ca_certificates_der()
     except (OSError, ValueError) as error:
-        raise HTTPException(status_code=503, detail="Local CA certificate is not ready") from error
+        raise HTTPException(
+            status_code=503,
+            detail="Local CA certificates are not ready",
+        ) from error
 
     return Response(
-        content=mobileconfig.build_mobileconfig(certificate_der),
+        content=mobileconfig.build_mobileconfig(root_der, intermediate_der),
         media_type="application/x-apple-aspen-config",
         headers={
             "Content-Disposition": 'attachment; filename="map-local-ca.mobileconfig"',

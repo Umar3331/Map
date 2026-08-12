@@ -32,11 +32,12 @@ See `docs/IPHONE_INSTALLATION.md`.
 
 Caddy issues the HTTPS leaf certificate for the exact `MAP_HOST` value. Its public CA certificate is
 available at the exact `/local-ca.crt` fallback route. The preferred `/local-ca.mobileconfig` route is
-proxied to FastAPI, which reads the same public `root.crt` through a read-only `caddy-data` mount and
-dynamically creates an Apple root-certificate profile. Stable profile UUIDs derive from the public
-certificate fingerprint, so the response is reproducible and automatically follows CA recreation.
-Neither route can expose the CA private key. CA and leaf-key state live under `/data` in the persistent
-`caddy-data` volume, and no Caddy state is bind-mounted into the repository.
+proxied to FastAPI, which reads the public `root.crt` and `intermediate.crt` through a read-only
+`caddy-data` mount and dynamically creates an Apple certificate profile for the complete CA chain.
+Stable profile and payload UUIDs derive from the public certificate fingerprints, so the response is
+reproducible and automatically follows CA recreation. Neither route can expose a CA private key. CA
+and leaf-key state live under `/data` in the persistent `caddy-data` volume, and no Caddy state is
+bind-mounted into the repository.
 
 ## Configuration and persistence
 
