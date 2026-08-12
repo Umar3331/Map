@@ -17,6 +17,8 @@
         root * /data/caddy/pki/authorities/local
         rewrite * /root.crt
         header Content-Type application/x-x509-ca-cert
+        header Content-Disposition "attachment; filename=map-local-ca.crt"
+        header Cache-Control "no-store"
         file_server
     }
 

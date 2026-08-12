@@ -21,3 +21,7 @@ apps/ios/*.xcworkspace/xcuserdata/
 apps/ios/*.xcodeproj/xcuserdata/
 *.xcuserstate
 *.tsbuildinfo
+*.key
+*.pem
+local-ca.crt
+root.crt

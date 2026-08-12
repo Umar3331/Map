@@ -39,6 +39,12 @@ a secure context on a physical phone, so use the local HTTPS endpoint for a reli
 This trusts only the project-local CA on your own device. It does not disable Safari security. Remove
 the profile when no longer needed. Private CA state stays in a Docker volume and is never committed.
 
+The CA volume persists across ordinary container restarts and recreation, so the iPhone trust remains
+valid. If the laptop's LAN IP changes, rerun `setup.ps1` and then `start.ps1`. Setup refreshes an
+automatically managed IP-valued `MAP_HOST`, and Caddy issues a new leaf certificate for that IP using
+the same persistent CA; normally the CA profile does not need to be reinstalled. If `MAP_HOST` is an
+explicit hostname, setup preserves it and `start.ps1` warns when it differs from the detected IP.
+
 ## Troubleshooting
 
 - Confirm both devices use the same Wi-Fi; guest networks may isolate clients.
@@ -46,7 +52,8 @@ the profile when no longer needed. Private CA state stays in a Docker volume and
 - Allow inbound ports 5173 and 8443 only for Private networks in Windows Defender Firewall.
 - Confirm `docker compose ps` shows `web`, `api`, `tiles`, and `db` healthy.
 - Confirm Docker publishes `0.0.0.0:5173` and `0.0.0.0:8443`.
-- If HTTPS host changed, update `MAP_HOST` in `.env`, recreate `web`, and install its current CA.
+- If HTTPS host changed, rerun setup/start and use the HTTPS URL they print. Reinstall the CA only
+  after intentionally deleting the `caddy-data` volume or if the downloaded CA actually changed.
 - For stale assets, close the Home Screen app, reload Safari, or remove and add the app again.
 - If the service worker remains stale, clear Safari website data for the LAN host and reinstall.
 - Do not use `localhost` on iPhone; it means the iPhone itself.

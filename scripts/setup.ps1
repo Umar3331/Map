@@ -30,12 +30,14 @@ $EnvValues = @{}
 Get-Content '.env' | Where-Object { $_ -match '^([^#=]+)=(.*)$' } | ForEach-Object {
     $EnvValues[$Matches[1]] = $Matches[2]
 }
-if (-not $EnvValues.ContainsKey('MAP_HOST') -or $EnvValues['MAP_HOST'] -eq 'localhost') {
-    $LanAddress = Get-NetIPConfiguration -ErrorAction SilentlyContinue |
-        Where-Object { $_.NetAdapter.Status -eq 'Up' -and $_.IPv4DefaultGateway -and $_.IPv4Address } |
-        Select-Object -First 1 -ExpandProperty IPv4Address |
-        Select-Object -ExpandProperty IPAddress
-    if ($LanAddress) {
+$LanAddress = Get-NetIPConfiguration -ErrorAction SilentlyContinue |
+    Where-Object { $_.NetAdapter.Status -eq 'Up' -and $_.IPv4DefaultGateway -and $_.IPv4Address } |
+    Select-Object -First 1 -ExpandProperty IPv4Address |
+    Select-Object -ExpandProperty IPAddress
+$ConfiguredMapHost = if ($EnvValues.ContainsKey('MAP_HOST')) { $EnvValues['MAP_HOST'] } else { '' }
+$MapHostIsAutomaticallyManaged = $ConfiguredMapHost -match '^(localhost|(?:\d{1,3}\.){3}\d{1,3})$'
+if ($LanAddress -and ($MapHostIsAutomaticallyManaged -or -not $ConfiguredMapHost)) {
+    if ($ConfiguredMapHost -ne $LanAddress) {
         if ($EnvValues.ContainsKey('MAP_HOST')) {
             (Get-Content '.env') -replace '^MAP_HOST=.*$', "MAP_HOST=$LanAddress" | Set-Content '.env'
         } else {

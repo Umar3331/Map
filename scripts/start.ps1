@@ -31,6 +31,15 @@ $LanAddress = Get-NetIPConfiguration -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty IPAddress
 if ($LanAddress) {
     Write-Host "LAN:      http://${LanAddress}:5173"
-    Write-Host "PWA HTTPS (after trusting the local CA): https://${LanAddress}:8443"
     Write-Host "CA certificate: http://${LanAddress}:5173/local-ca.crt"
+}
+$ConfiguredMapHost = Get-Content '.env' |
+    Where-Object { $_ -match '^MAP_HOST=(.+)$' } |
+    ForEach-Object { $Matches[1] } |
+    Select-Object -First 1
+if ($ConfiguredMapHost) {
+    Write-Host "PWA HTTPS (after trusting the local CA): https://${ConfiguredMapHost}:8443"
+    if ($LanAddress -and $ConfiguredMapHost -ne $LanAddress) {
+        Write-Warning "MAP_HOST ($ConfiguredMapHost) differs from the detected LAN IP ($LanAddress). Run .\scripts\setup.ps1 or set MAP_HOST explicitly before iPhone testing."
+    }
 }

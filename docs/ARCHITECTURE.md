@@ -11,8 +11,8 @@ Docker Compose runs four services on one private network:
 
 The browser uses one origin. Caddy serves static PWA files, proxies `/api/*` and `/health` to FastAPI,
 and strips `/tiles` before proxying to Martin. Thus a request to `http://WINDOWS_LAN_IP:5173` never
-causes the iPhone to call its own `localhost`. Martin and Postgres host ports bind only to Windows
-loopback. The frontend and API bind to the LAN intentionally for local development.
+causes the iPhone to call its own `localhost`. FastAPI, Martin, and Postgres host ports bind only to
+Windows loopback. Only Caddy's HTTP 5173 and HTTPS 8443 ports bind to the LAN.
 
 ## Map data
 
@@ -29,6 +29,11 @@ secure development context, but a plain LAN IP is not a secure context. Caddy th
 local HTTPS using its private CA. A physical iPhone must explicitly install and trust that CA before
 using the HTTPS endpoint; no browser security is disabled and no certificate/private key is committed.
 See `docs/IPHONE_INSTALLATION.md`.
+
+Caddy issues the HTTPS leaf certificate for the exact `MAP_HOST` value. Its public CA certificate is
+available only at the exact `/local-ca.crt` route; that route rewrites to `root.crt` and never exposes
+the CA private key. CA and leaf-key state live under `/data` in the persistent `caddy-data` volume, so
+container recreation preserves trust. No Caddy state is bind-mounted into the repository.
 
 ## Configuration and persistence
 
