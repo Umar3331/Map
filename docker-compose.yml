@@ -17,6 +17,9 @@ services:
     command: validate
     environment:
       MAP_HOST: ${MAP_HOST:-localhost}
+      TLS_CONNECT_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - rsa-pki-public:/pki/public:ro
 

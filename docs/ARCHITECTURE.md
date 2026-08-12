@@ -37,6 +37,10 @@ contains the CA keys and is mounted only by the generator and Caddy. The API rec
 volume. This separate CA ID and storage prevent Caddy's earlier default ECC CA or cached ECC leaf from
 being selected.
 
+Caddy uses `MAP_HOST` as both its default SNI for clients that omit SNI and its fallback SNI for
+clients that send an unmatched connection hostname. Both paths select the same managed IP-SAN leaf;
+this accommodates IP-literal Safari connections and makes published-port TLS checks deterministic.
+
 The public root is available at the exact `/local-ca.crt` fallback route. The preferred
 `/local-ca.mobileconfig` route is proxied to FastAPI, which reads the public `root.crt` and
 `intermediate.crt` and dynamically creates an Apple certificate profile for the complete CA chain.

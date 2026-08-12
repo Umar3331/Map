@@ -127,6 +127,8 @@ generate_pki() {
 
 validate_live_tls() {
     : "${MAP_HOST:=localhost}"
+    : "${TLS_CONNECT_HOST:=web}"
+    handshake_mode=${1:-sni}
     assert_rsa_certificate "$ROOT_CERT" 'RSA root'
     assert_rsa_certificate "$INTERMEDIATE_CERT" 'RSA intermediate'
     openssl verify -CAfile "$ROOT_CERT" "$INTERMEDIATE_CERT" >/dev/null
@@ -137,14 +139,47 @@ validate_live_tls() {
         *[!0-9.]*|'') identity_option='-verify_hostname' ;;
         *) identity_option='-verify_ip' ;;
     esac
-    openssl s_client \
-        -connect web:8443 \
-        -servername "$MAP_HOST" \
-        -showcerts \
-        -verify_return_error \
-        -CAfile "$ROOT_CERT" \
-        "$identity_option" "$MAP_HOST" \
-        </dev/null > "$validation_dir/handshake.txt" 2>&1
+    case "$handshake_mode" in
+        sni)
+            if ! openssl s_client \
+                -connect "$TLS_CONNECT_HOST:8443" \
+                -servername "$MAP_HOST" \
+                -showcerts \
+                -verify_return_error \
+                -CAfile "$ROOT_CERT" \
+                "$identity_option" "$MAP_HOST" \
+                </dev/null > "$validation_dir/handshake.txt" 2>&1; then
+                cat "$validation_dir/handshake.txt" >&2
+                exit 1
+            fi
+            ;;
+        no-sni)
+            if ! openssl s_client \
+                -connect "$TLS_CONNECT_HOST:8443" \
+                -noservername \
+                -showcerts \
+                -verify_return_error \
+                -CAfile "$ROOT_CERT" \
+                "$identity_option" "$MAP_HOST" \
+                </dev/null > "$validation_dir/handshake.txt" 2>&1; then
+                cat "$validation_dir/handshake.txt" >&2
+                exit 1
+            fi
+            ;;
+        implicit-connect-host)
+            if ! openssl s_client \
+                -connect "$TLS_CONNECT_HOST:8443" \
+                -showcerts \
+                -verify_return_error \
+                -CAfile "$ROOT_CERT" \
+                "$identity_option" "$MAP_HOST" \
+                </dev/null > "$validation_dir/handshake.txt" 2>&1; then
+                cat "$validation_dir/handshake.txt" >&2
+                exit 1
+            fi
+            ;;
+        *) echo "Unknown TLS handshake mode: $handshake_mode" >&2; exit 2 ;;
+    esac
 
     awk -v directory="$validation_dir" '
         /-----BEGIN CERTIFICATE-----/ {
@@ -181,7 +216,9 @@ validate_live_tls() {
             exit 1
         }
 
-    echo 'Live Map RSA PKI validation passed.'
+    leaf_fingerprint=$(openssl x509 -in "$validation_dir/chain-1.crt" -outform DER | sha256sum | cut -d ' ' -f 1)
+    echo "Live Map RSA PKI validation passed ($handshake_mode)."
+    echo "leaf_sha256=$leaf_fingerprint"
     echo 'Root signs intermediate: verified'
     echo 'Intermediate signs leaf: verified'
     openssl x509 -in "$ROOT_CERT" -noout -subject -fingerprint -sha256 -nameopt RFC2253
@@ -198,6 +235,6 @@ validate_live_tls() {
 
 case "${1:-generate}" in
     generate) generate_pki ;;
-    validate) validate_live_tls ;;
+    validate) validate_live_tls "${2:-sni}" ;;
     *) echo "Unknown command: $1" >&2; exit 2 ;;
 esac

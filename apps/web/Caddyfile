@@ -1,4 +1,6 @@
 {
+	default_sni {$MAP_HOST}
+	fallback_sni {$MAP_HOST}
 	skip_install_trust
 
 	pki {
