@@ -1,26 +1,42 @@
 # Local development
 
-From the repository root in PowerShell:
+The normal full stack runs in Docker:
 
 ```powershell
 .\scripts\setup.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 docker compose ps
-docker compose logs -f api
+docker compose logs -f web api tiles db
 .\scripts\stop.ps1
 ```
 
-Run backend checks without a host Python installation:
+Map is at `http://localhost:5173`; API documentation is at `http://localhost:8000/docs`. Requests to
+`/api` and `/tiles` on the Map origin are proxied internally. Postgres and Martin are not exposed to
+other LAN devices.
+
+For frontend-only iteration, keep backend services running and use:
 
 ```powershell
-docker build -f services/api/Dockerfile -t map-api-test services/api
-docker run --rm -v "${PWD}/services/api/tests:/app/tests:ro" map-api-test `
-  sh -c "pip install -r /app/requirements-dev.txt && pytest && ruff check app tests"
+cd apps\web
+npm.cmd install
+npm.cmd run dev
 ```
 
-Key URLs are `/health`, `/api/v1/config`, `/api/v1/map/style.json`, and `/docs` on port 8000.
-Martin's catalog is on port 3000. The style endpoint intentionally mirrors the request hostname.
+Vite binds to `0.0.0.0` and proxies to local Docker ports. The installable service worker is generated
+and exercised by the production Docker build, not Vite's development server.
 
-To prepare a clipped OSM extract, run `.\scripts\map-data.ps1 -Download`. This downloads a large,
-changeable external file and writes ignored data under `data/`.
+Checks:
+
+```powershell
+cd apps\web
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
+cd ..\..
+docker compose config --quiet
+```
+
+Use `.\scripts\map-data.ps1 -Download` to create an ignored Vilnius PBF from the current Lithuania
+extract. Do not commit geographic downloads or output.
