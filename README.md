@@ -34,7 +34,7 @@ flowchart LR
 
 The web gateway is the only browser-facing integration point. This prevents an iPhone from receiving
 incorrect `localhost` API or tile URLs. Postgres and Martin are published only on Windows loopback;
-the gateway and API are intentionally reachable on the LAN during local development.
+only the web gateway ports are intentionally reachable on the LAN during local development.
 
 ## Run on Windows
 
@@ -52,6 +52,7 @@ Copy-Item .env.example .env
 Open `http://localhost:5173`. The start script also prints the active LAN URL and optional HTTPS PWA
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
+Milestone 1 merge acceptance is tracked in [the acceptance checklist](docs/ACCEPTANCE.md).
 
 ## Map-data status
 
@@ -59,6 +60,9 @@ The seeded Vilnius boundary vector layer is local and self-hosted through PostGI
 detailed visual basemap currently uses OpenStreetMap's public raster tile server as a **TEMPORARY
 DEVELOPMENT DEPENDENCY**. The target remains filtered Vilnius OSM data served locally; large source
 extracts and generated artifacts are ignored by Git. OSM attribution remains visible.
+
+The immediate next milestone is **Milestone 1.1 — Fully self-hosted Vilnius basemap**. It will replace
+the public raster dependency; this PR intentionally does not implement that work.
 
 ## Repository
 

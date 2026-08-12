@@ -23,7 +23,8 @@ future evaluation; no native Swift work belongs to Milestone 1 unless explicitly
 
 ## ADR-005 — MapLibre
 **Status:** Accepted. **Context:** The client needs an open map renderer with vector support.
-**Decision:** Use MapLibre Native. **Consequences:** We maintain style and data-source configuration.
+**Decision:** Use the MapLibre ecosystem; the active PWA uses MapLibre GL JS. **Consequences:** We
+maintain style and data-source configuration without a Google Maps dependency.
 
 ## ADR-006 — OpenStreetMap
 **Status:** Accepted. **Context:** Open geographic source data supports local control. **Decision:**
