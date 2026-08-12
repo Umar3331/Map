@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgis-data:/var/lib/postgresql/data
       - ./infrastructure/local/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -42,11 +42,36 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
-      - "0.0.0.0:${TILE_PORT:-3000}:3000"
+      - "127.0.0.1:${TILE_PORT:-3000}:3000"
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
+  web:
+    build:
+      context: ./apps/web
+    environment:
+      MAP_HOST: ${MAP_HOST:-localhost}
+    ports:
+      - "0.0.0.0:${WEB_PORT:-5173}:5173"
+      - "0.0.0.0:${WEB_HTTPS_PORT:-8443}:8443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      tiles:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:5173/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
 volumes:
   postgis-data:
+  caddy-data:
+  caddy-config:
