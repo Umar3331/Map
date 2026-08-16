@@ -1,4 +1,21 @@
 CREATE SCHEMA IF NOT EXISTS app;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE OR REPLACE FUNCTION app.normalize_search_text(input text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+    SELECT lower(
+        btrim(
+            regexp_replace(
+                regexp_replace(coalesce(input, ''), '[[:punct:]„“”’]+', ' ', 'g'),
+                '\s+', ' ', 'g'
+            )
+        )
+    );
+$$;
 
 CREATE TABLE IF NOT EXISTS app.place_sources (
     id smallint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -61,6 +78,16 @@ CREATE TABLE IF NOT EXISTS app.places (
 CREATE INDEX IF NOT EXISTS places_geom_idx ON app.places USING GIST (geom);
 CREATE INDEX IF NOT EXISTS places_category_idx ON app.places (category) WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS places_normalized_name_idx ON app.places (normalized_name);
+CREATE INDEX IF NOT EXISTS places_normalized_name_prefix_idx
+    ON app.places (normalized_name text_pattern_ops) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS places_normalized_name_trgm_idx
+    ON app.places USING GIN (normalized_name gin_trgm_ops) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS places_subcategory_idx
+    ON app.places (subcategory) WHERE status = 'active';
+
+UPDATE app.places
+SET normalized_name = app.normalize_search_text(name)
+WHERE normalized_name IS DISTINCT FROM app.normalize_search_text(name);
 
 CREATE TABLE IF NOT EXISTS app.place_import_runs (
     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

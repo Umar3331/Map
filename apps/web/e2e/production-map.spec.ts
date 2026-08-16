@@ -195,3 +195,177 @@ test('place details use an iPhone-sized bottom sheet', async ({ page }) => {
   expect(panelBox.width).toBeGreaterThan(350)
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
 })
+
+test('desktop search ranks, navigates, opens existing details, and clears', async ({ page }, testInfo) => {
+  const searchRequests: string[] = []
+  const runtimeUrls: string[] = []
+  const runtimeErrors: string[] = []
+  page.on('request', (request) => {
+    if (/^https?:/.test(request.url())) runtimeUrls.push(request.url())
+    if (request.url().includes('/api/v1/search?')) searchRequests.push(request.url())
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/', { waitUntil: 'load' })
+  const map = page.locator('.map-canvas')
+  await expect(map).toHaveAttribute('data-map-center', /,/)
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  await input.fill('Maxima')
+  await expect.poll(() => searchRequests.length).toBeGreaterThan(0)
+  const options = page.getByRole('option')
+  await expect(options.first()).toContainText('Maxima')
+  await expect(options.first()).toContainText(/Supermarket/i)
+
+  const centerBefore = await map.getAttribute('data-map-center')
+  await input.press('ArrowDown')
+  await input.press('ArrowUp')
+  await input.press('Enter')
+  const panel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('heading', { level: 1 })).toHaveText('Maxima')
+  await expect(map).toHaveAttribute('data-search-selected-place-id', /\d+/)
+  await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeGreaterThanOrEqual(16)
+  await expect.poll(async () => await map.getAttribute('data-map-center')).not.toBe(centerBefore)
+
+  await page.getByRole('button', { name: 'Clear search' }).click()
+  await expect(input).toHaveValue('')
+  await expect(page.getByLabel('Search results')).not.toBeVisible()
+  await expect(panel).not.toBeVisible()
+  await expect(map).not.toHaveAttribute('data-search-selected-place-id', /\d+/)
+
+  await input.fill('Rim')
+  await expect(page.getByRole('option').first()).toContainText(/Rimi/i)
+  await input.fill('restaurant')
+  await expect(page.getByRole('option').first()).toContainText(/Restaurant/i)
+  await input.press('Escape')
+  await expect(input).toHaveAttribute('aria-expanded', 'false')
+
+  expect(runtimeErrors).toEqual([])
+  const origin = new URL(page.url()).origin
+  expect([...new Set(runtimeUrls.map((url) => new URL(url).origin))]).toEqual([origin])
+  const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-search-desktop.png') })
+  expect(screenshot.byteLength).toBeGreaterThan(50_000)
+})
+
+test('desktop gym discovery uses taxonomy and an uncluttered search map mode', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/', { waitUntil: 'load' })
+  const map = page.locator('.map-canvas')
+  await expect(map).toHaveAttribute('data-map-center', /,/)
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  const searchResponse = page.waitForResponse((response) => (
+    response.url().includes('/api/v1/search?')
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'gym'
+  ))
+  await input.fill('gym')
+  const payload = await (await searchResponse).json() as {
+    results: Array<{ id: number; name: string; subcategory: string }>
+    meta: { returned: number; intent: string }
+  }
+  expect(payload.meta.intent).toBe('category')
+  expect(payload.results.length).toBeGreaterThan(2)
+  expect(payload.results.every((result) => result.subcategory === 'fitness_centre')).toBe(true)
+  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/gym/i.test(result.name))
+  expect(taxonomyOnlyIndex).toBeGreaterThanOrEqual(0)
+
+  await expect(map).toHaveAttribute('data-search-mode', 'active')
+  await expect(map).toHaveAttribute('data-normal-places-visible', 'false')
+  await expect(map).toHaveAttribute('data-search-result-count', String(payload.results.length))
+  await expect(map).toHaveAttribute('data-search-layers', /app-search-result-points/)
+  await expect(page.getByText('Zoom in to see all places')).not.toBeVisible()
+  const activeScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-gym-search-active-desktop.png'),
+  })
+  expect(activeScreenshot.byteLength).toBeGreaterThan(50_000)
+
+  const chosen = payload.results[taxonomyOnlyIndex]
+  await page.getByRole('option').nth(taxonomyOnlyIndex).click()
+  await expect(map).toHaveAttribute('data-search-selected-place-id', String(chosen.id))
+  await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeGreaterThanOrEqual(16)
+  const panel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(panel.getByRole('heading', { level: 1 })).toHaveText(chosen.name)
+  const selectedScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-gym-search-selected-desktop.png'),
+  })
+  expect(selectedScreenshot.byteLength).toBeGreaterThan(50_000)
+
+  await page.getByRole('button', { name: 'Clear search' }).click()
+  await expect(map).toHaveAttribute('data-search-mode', 'inactive')
+  await expect(map).toHaveAttribute('data-search-result-count', '0')
+  await expect(map).toHaveAttribute('data-normal-places-visible', 'true')
+  await expect(panel).not.toBeVisible()
+  expect(runtimeErrors).toEqual([])
+
+  const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-gym-search-mode-desktop.png') })
+  expect(screenshot.byteLength).toBeGreaterThan(50_000)
+})
+
+test('mobile search transitions cleanly into the existing details sheet', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/', { waitUntil: 'load' })
+  const map = page.locator('.map-canvas')
+  await expect(map).toHaveAttribute('data-map-center', /,/)
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  const searchResponse = page.waitForResponse((response) => (
+    response.url().includes('/api/v1/search?')
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'gym'
+  ))
+  await input.fill('gym')
+  const payload = await (await searchResponse).json() as {
+    results: Array<{ id: number; name: string; subcategory: string }>
+    meta: { intent: string }
+  }
+  expect(payload.meta.intent).toBe('category')
+  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/gym/i.test(result.name))
+  expect(taxonomyOnlyIndex).toBeGreaterThanOrEqual(0)
+  await expect(map).toHaveAttribute('data-search-mode', 'active')
+  await expect(map).toHaveAttribute('data-normal-places-visible', 'false')
+  await expect(page.getByText('Zoom in to see all places')).not.toBeVisible()
+  const activeScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-gym-search-active-mobile.png'),
+  })
+  expect(activeScreenshot.byteLength).toBeGreaterThan(50_000)
+  const firstResult = page.getByRole('option').nth(taxonomyOnlyIndex)
+  await expect(firstResult).toBeVisible()
+  await expect(firstResult).toContainText(/Fitness Centre/i)
+  const resultBox = await firstResult.boundingBox()
+  if (!resultBox) throw new Error('Mobile search result has no rendered bounds')
+  expect(resultBox.height).toBeGreaterThanOrEqual(68)
+  expect(resultBox.x).toBeGreaterThanOrEqual(0)
+  expect(resultBox.x + resultBox.width).toBeLessThanOrEqual(390)
+
+  await firstResult.click()
+  const panel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(panel).toBeVisible()
+  await expect(page.getByLabel('Search results')).not.toBeVisible()
+  const panelBox = await panel.boundingBox()
+  if (!panelBox) throw new Error('Mobile place details panel has no rendered bounds')
+  expect(panelBox.y + panelBox.height).toBeGreaterThan(820)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  const selectedScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-gym-search-selected-mobile.png'),
+  })
+  expect(selectedScreenshot.byteLength).toBeGreaterThan(50_000)
+
+  await page.getByRole('button', { name: 'Clear search' }).click()
+  await expect(panel).not.toBeVisible()
+  await expect(map).toHaveAttribute('data-search-mode', 'inactive')
+  await expect(map).toHaveAttribute('data-normal-places-visible', 'true')
+  expect(runtimeErrors).toEqual([])
+  const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-search-mobile.png') })
+  expect(screenshot.byteLength).toBeGreaterThan(50_000)
+})

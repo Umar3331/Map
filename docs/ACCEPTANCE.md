@@ -86,3 +86,39 @@ Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
   layout has no horizontal overflow, and the existing HTTPS/PWA behavior remains correct.
 
 Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
+
+## Milestone 3 draft acceptance
+
+- [x] Search reads only active `app.places` data and returns compact results without full provenance.
+- [x] Exact, prefix, partial, category alias, and lightweight trigram typo searches are deterministic.
+- [x] Search normalization handles case, outer/repeated whitespace, punctuation, and UTF-8 names
+  without changing canonical names or removing Lithuanian diacritics.
+- [x] PostgreSQL prefix, trigram GIN, category, subcategory, and spatial indexes are installed and
+  representative `EXPLAIN ANALYZE` plans avoid inappropriate sequential scans.
+- [x] Ordinary brand/name searches use exact, prefix, and fuzzy name relevance before geographic
+  context; recognized aliases use exact application taxonomy as their candidate set.
+- [x] `gym` includes `fitness_centre` records without `gym` in their names, while `Gym+` and
+  `Lemon Gym` remain name-oriented brand searches.
+- [x] Desktop results support Arrow Up/Down, Enter, Escape, clear, and accessible combobox/listbox
+  semantics.
+- [x] Result selection moves MapLibre to zoom 16, selects the place, and reuses the existing place
+  details card or mobile bottom sheet.
+- [x] Meaningful results activate dedicated unclustered search-result and selected-result layers,
+  hide unrelated normal viewport POIs, and clear/dismiss restores normal clustering.
+- [x] The 390-by-844 production layout has touch-friendly results, a clean search-to-details
+  transition, and no horizontal overflow.
+- [x] Live quality checks pass for Maxima, Rimi, cafe, restaurant, pharmacy, gym, hotel, bank, and
+  representative prefix/typo queries.
+- [x] Frontend/backend tests, production build, Compose/live validation, six Playwright production
+  scenarios, and Windows Edge visual/console checks pass.
+- [x] On 2026-08-17, physical-iPhone re-acceptance confirmed that `gym` discovers taxonomy-based
+  `fitness_centre` results, including relevant brands such as Lemon Gym, while `Gym+` remains a
+  name-oriented brand query.
+- [x] On the physical iPhone, active search hides unrelated normal POIs while keeping search-result
+  markers visible; selection focuses the map and opens the existing details bottom sheet.
+- [x] Clearing or dismissing search restores normal viewport POIs, mobile keyboard behavior remains
+  usable, and there is no horizontal overflow or broken layout.
+- [x] Existing physical-iPhone HTTPS and installed-PWA behavior remains correct after the search
+  ranking and MapLibre search-mode changes.
+
+Milestone 3 physical-iPhone acceptance passed on 2026-08-17.

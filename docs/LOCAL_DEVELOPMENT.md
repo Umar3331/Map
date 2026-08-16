@@ -112,3 +112,19 @@ provenance. The FeatureCollection `meta` object reports `returned`, `total`, and
 truncated viewport displays zoom guidance instead of incomplete clusters; zoom in until the response
 is complete to inspect and select places. See `docs/PLACES_DATA.md` for taxonomy, attribution, and
 licensing details.
+
+## Local search
+
+Run `scripts/places-data.ps1` after pulling the Milestone 3 schema so the idempotent place setup
+installs `pg_trgm`, search normalization, and indexes. Validate the imported search catalogue with:
+
+```powershell
+.\scripts\validate-search.ps1
+```
+
+The PWA calls `GET /api/v1/search?q=...&limit=...` through the same origin. The default limit is 10,
+the maximum is 25, and meaningful queries require at least two normalized characters. Bounds and
+latitude/longitude are optional ranking context, not hard geographic filters. Search works without
+Internet access after the normal local OSM import. Recognized category terms use taxonomy discovery;
+active results temporarily replace normal viewport POIs with a bounded search-result layer. See
+`docs/SEARCH.md` for the full contract and ranking rules.

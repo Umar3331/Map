@@ -78,6 +78,17 @@ card when a place is selected. Viewport responses report returned and total coun
 view exceeds the limit, Map hides the incomplete client-side clusters and asks the user to zoom in.
 See [place data and provenance](docs/PLACES_DATA.md).
 
+## Vilnius search and discovery
+
+Milestone 3 makes the map search box query only the trusted `app.places` catalogue through the local
+FastAPI/PostgreSQL stack. Search supports exact, prefix, partial, and lightweight typo-tolerant name
+matching plus a small documented set of category aliases. Recognized category terms discover the
+matching taxonomy even when names do not contain the term; specific brand queries retain name-first
+ranking. While results are active, a dedicated MapLibre source replaces unrelated viewport POIs so
+the map shows the search context. Selecting a result moves the map to zoom 16 and reuses the existing
+place-details card or mobile bottom sheet. See
+[search architecture and behavior](docs/SEARCH.md).
+
 ## Repository
 
 - `apps/web` — active React/TypeScript/MapLibre PWA

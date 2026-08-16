@@ -132,3 +132,27 @@ FastAPI GeoJSON, not Martin basemap tiles, and render them as MapLibre-native cl
 imports remain idempotent; attribution and licensing remain traceable; future sources can be added
 without discarding OSM IDs. Cross-source fuzzy deduplication, provider claims, search, rankings, and
 editing workflows remain deferred.
+
+## ADR-022 — PostgreSQL search before a dedicated search service
+**Status:** Accepted. **Context:** Milestone 3 searches approximately 4,700 application-owned Vilnius
+places. A separate search cluster would add deployment, synchronization, security, and Windows
+operational complexity without a demonstrated scale or relevance need. **Decision:** Implement
+deterministic local search in PostgreSQL using canonical names, a punctuation/whitespace-normalized
+search form, B-tree prefix and subcategory indexes, and a GIN `pg_trgm` index. Keep aliases small and
+explicit in FastAPI. Rank textual quality before viewport/distance bias and return at most 25 compact
+results. **Consequences:** Search remains transactional with `app.places`, fully local, and simple to
+operate. Typo tolerance is deliberately lightweight; multilingual stemming, semantic search,
+recommendations, and a dedicated search service remain deferred until measured product needs justify
+them.
+
+## ADR-023 — Intent-aware taxonomy discovery and explicit search map mode
+**Status:** Accepted. **Context:** Treating every query as name-first caused a recognized term such
+as `gym` to over-rank Gym-branded rows and obscure fitness centres whose names lacked that word.
+Showing normal viewport POIs alongside a bounded search result set also made the selected search
+context visually ambiguous. **Decision:** Classify only recognized aliases as category intent and
+use their mapped application taxonomy as the primary candidate set; retain name-first ranking for
+brands, including meaningful punctuation such as `Gym+`. Render active results in a separate,
+unclustered MapLibre GeoJSON source while hiding normal place layers, then restore browsing layers
+on clear or dismiss. **Consequences:** Category discovery is complete with respect to its explicit
+taxonomy mapping but still bounded to 25 ranked results. Search markers represent returned results,
+not a total category count. Alias mappings require tests against the imported taxonomy.

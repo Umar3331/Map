@@ -17,11 +17,15 @@ vi.mock('maplibre-gl', () => ({
     addSource = vi.fn()
     addLayer = vi.fn()
     getSource = vi.fn()
+    getLayer = vi.fn(() => ({}))
     getBounds = vi.fn(() => ({ getWest: () => 25.1, getSouth: () => 54.55, getEast: () => 25.5, getNorth: () => 54.85 }))
+    getCenter = vi.fn(() => ({ lng: 25.2797, lat: 54.6872 }))
+    getZoom = vi.fn(() => 11.4)
     getCanvas = vi.fn(() => document.createElement('canvas'))
     project = vi.fn(() => ({ x: 100, y: 100 }))
     easeTo = vi.fn()
     setFilter = vi.fn()
+    setLayoutProperty = vi.fn()
     on(eventName: string, layerOrHandler: unknown, possibleHandler?: unknown) {
       const handler = (typeof layerOrHandler === 'function' ? layerOrHandler : possibleHandler) as
         (event: { error?: Error; sourceId?: string; sourceDataType?: string }) => void

@@ -10,11 +10,6 @@ type LoadState =
 
 export default function App() {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
-  const regionName =
-    state.status === 'ready'
-      ? state.config.region.charAt(0).toUpperCase() + state.config.region.slice(1)
-      : null
-
   useEffect(() => {
     const controller = new AbortController()
     loadConfig(controller.signal)
@@ -32,14 +27,6 @@ export default function App() {
   return (
     <main className="app-shell">
       {state.status === 'ready' && <MapView config={state.config} />}
-      <header className="top-bar">
-        <div className="brand" aria-label="Map home">M</div>
-        <div className="search-shell" role="search" aria-label="Search is coming in a future milestone">
-          <span className="search-icon" aria-hidden="true" />
-          <span>{regionName ? `Search ${regionName}` : 'Search map'}</span>
-          <span className="coming-soon">Soon</span>
-        </div>
-      </header>
       {state.status === 'loading' && (
         <section className="status-card" role="status">
           <span className="status-pulse" />
