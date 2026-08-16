@@ -74,7 +74,9 @@ Milestone 2 introduces Map-owned `app.places` entities seeded from a curated sub
 points of interest. Run `scripts/places-data.ps1` after `map-data.ps1`; repeated runs upsert by stable
 OSM source ID and do not duplicate records. The PWA requests only the current viewport from
 `/api/v1/places`, renders category-aware clustered MapLibre layers, and opens a responsive details
-card when a place is selected. See [place data and provenance](docs/PLACES_DATA.md).
+card when a place is selected. Viewport responses report returned and total counts. When a broad
+view exceeds the limit, Map hides the incomplete client-side clusters and asks the user to zoom in.
+See [place data and provenance](docs/PLACES_DATA.md).
 
 ## Repository
 

@@ -108,4 +108,7 @@ Validate the latest two imports with:
 The map requests only the visible bounding box. The list endpoint is
 `GET /api/v1/places?west=...&south=...&east=...&north=...&category=...&limit=...`; category is
 optional and limit is capped at 500. `GET /api/v1/places/{id}` returns optional details and source
-provenance. See `docs/PLACES_DATA.md` for taxonomy, attribution, and licensing details.
+provenance. The FeatureCollection `meta` object reports `returned`, `total`, and `truncated`. A broad
+truncated viewport displays zoom guidance instead of incomplete clusters; zoom in until the response
+is complete to inspect and select places. See `docs/PLACES_DATA.md` for taxonomy, attribution, and
+licensing details.

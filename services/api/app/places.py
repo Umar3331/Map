@@ -41,6 +41,16 @@ def close_places_pool() -> None:
 
 
 class PlacesRepository(Protocol):
+    def count_places(
+        self,
+        *,
+        west: float,
+        south: float,
+        east: float,
+        north: float,
+        category: str | None,
+    ) -> int: ...
+
     def list_places(
         self,
         *,
@@ -119,6 +129,40 @@ class PostgresPlacesRepository:
             for row in rows
         ]
 
+    def count_places(
+        self,
+        *,
+        west: float,
+        south: float,
+        east: float,
+        north: float,
+        category: str | None,
+    ) -> int:
+        category_clause = "AND place.category = %(category)s" if category else ""
+        query = f"""
+            SELECT count(*) AS total
+            FROM app.places AS place
+            WHERE place.status = 'active'
+              AND place.geom && ST_MakeEnvelope(
+                  %(west)s, %(south)s, %(east)s, %(north)s, 4326
+              )
+              AND ST_Intersects(
+                  place.geom,
+                  ST_MakeEnvelope(%(west)s, %(south)s, %(east)s, %(north)s, 4326)
+              )
+              {category_clause}
+        """
+        parameters = {
+            "west": west,
+            "south": south,
+            "east": east,
+            "north": north,
+            "category": category,
+        }
+        with self.connection.cursor() as cursor:
+            row = cursor.execute(query, parameters).fetchone()
+        return int(row[0]) if row else 0
+
     def get_place(self, place_id: int) -> dict[str, Any] | None:
         query = """
             SELECT
@@ -163,8 +207,19 @@ def get_places_repository() -> Iterator[PlacesRepository]:
         yield PostgresPlacesRepository(connection)
 
 
-def _feature_collection(features: list[dict[str, Any]]) -> dict[str, Any]:
-    return {"type": "FeatureCollection", "features": features}
+def _feature_collection(
+    features: list[dict[str, Any]], total: int
+) -> dict[str, Any]:
+    returned = len(features)
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "meta": {
+            "returned": returned,
+            "total": total,
+            "truncated": total > returned,
+        },
+    }
 
 
 @router.get("")
@@ -181,15 +236,19 @@ def list_places(
         raise HTTPException(status_code=422, detail="Invalid bounding box")
     if category is not None and category not in PLACE_CATEGORIES:
         raise HTTPException(status_code=422, detail="Unknown place category")
+    query = {
+        "west": west,
+        "south": south,
+        "east": east,
+        "north": north,
+        "category": category,
+    }
+    total = repository.count_places(**query)
     features = repository.list_places(
-        west=west,
-        south=south,
-        east=east,
-        north=north,
-        category=category,
+        **query,
         limit=limit,
     )
-    return _feature_collection(features)
+    return _feature_collection(features, total)
 
 
 @router.get("/{place_id}")

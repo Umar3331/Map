@@ -7,7 +7,7 @@ import type { MapConfig } from './config'
 import { createVilniusStyle } from './mapStyle'
 import { installPlaceLayers, placeLayerIds, placeSourceId, updatePlaceSource } from './placeLayers'
 import { PlaceDetailsPanel } from './PlaceDetailsPanel'
-import { loadPlaceDetails, loadPlaces, type PlaceDetails } from './places'
+import { loadPlaceDetails, loadPlaces, placesForMap, type PlaceDetails } from './places'
 
 type MapViewProps = {
   config: MapConfig
@@ -17,7 +17,9 @@ export function MapView({ config }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
-  const [placesStatus, setPlacesStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading')
+  const [placesStatus, setPlacesStatus] = useState<
+    'loading' | 'ready' | 'empty' | 'truncated' | 'error'
+  >('loading')
   const regionName = config.region.charAt(0).toUpperCase() + config.region.slice(1)
 
   useEffect(() => {
@@ -87,13 +89,16 @@ export function MapView({ config }: MapViewProps) {
             north: bounds.getNorth(),
           }, placesController.signal)
           if (disposed) return
-          updatePlaceSource(map, places)
+          const displayedPlaces = placesForMap(places)
+          updatePlaceSource(map, displayedPlaces)
           await new Promise<void>((resolve) => { map.once('idle', () => resolve()) })
           if (disposed) return
           viewportRequests += 1
-          mapContainer.dataset.placeCount = String(places.features.length)
+          mapContainer.dataset.placeCount = String(displayedPlaces.features.length)
+          mapContainer.dataset.placeTotal = String(places.meta.total)
+          mapContainer.dataset.placesTruncated = String(places.meta.truncated)
           mapContainer.dataset.viewportRequestCount = String(viewportRequests)
-          const clickable = places.features
+          const clickable = displayedPlaces.features
             .map((feature) => ({ feature, point: map.project(feature.geometry.coordinates) }))
             .find(({ point }) => point.x > 20 && point.y > 70
               && point.x < mapContainer.clientWidth - 20
@@ -105,7 +110,11 @@ export function MapView({ config }: MapViewProps) {
             delete mapContainer.dataset.placeClickX
             delete mapContainer.dataset.placeClickY
           }
-          setPlacesStatus(places.features.length ? 'ready' : 'empty')
+          setPlacesStatus(
+            places.meta.truncated
+              ? 'truncated'
+              : displayedPlaces.features.length ? 'ready' : 'empty',
+          )
         } catch (error) {
           if (error instanceof DOMException && error.name === 'AbortError') return
           if (!disposed) setPlacesStatus('error')
@@ -175,6 +184,11 @@ export function MapView({ config }: MapViewProps) {
       />
       {placesStatus === 'loading' && <div className="places-status" role="status">Loading places…</div>}
       {placesStatus === 'empty' && <div className="places-status">No places in this view</div>}
+      {placesStatus === 'truncated' && (
+        <div className="places-status places-status-guidance" role="status">
+          Zoom in to see all places
+        </div>
+      )}
       {placesStatus === 'error' && <div className="places-status places-status-error" role="alert">Places are temporarily unavailable</div>}
       {selectedPlace && <PlaceDetailsPanel place={selectedPlace} onClose={closeDetails} />}
     </>

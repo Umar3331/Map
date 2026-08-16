@@ -73,6 +73,8 @@ Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
   fields are omitted cleanly.
 - [x] Moving the map reloads only the visible viewport and a failed place request does not break the
   self-hosted basemap.
+- [x] Bounded responses report total/returned/truncated metadata; broad truncated views suppress
+  incomplete clusters and show unobtrusive zoom guidance.
 - [x] Frontend unit tests, backend tests, Compose validation, live importer validation, and the
   production Playwright browser suite pass.
 - [x] Playwright verifies real marker selection, detail rendering, dismissal, viewport reload, and a

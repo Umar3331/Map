@@ -35,6 +35,11 @@ export type PlaceFeature = {
 export type PlaceFeatureCollection = {
   type: 'FeatureCollection'
   features: PlaceFeature[]
+  meta: {
+    returned: number
+    total: number
+    truncated: boolean
+  }
 }
 
 export type PlaceDetails = {
@@ -62,7 +67,11 @@ export type PlaceDetails = {
   source_updated_at: string
 }
 
-export const emptyPlaces: PlaceFeatureCollection = { type: 'FeatureCollection', features: [] }
+export const emptyPlaces: PlaceFeatureCollection = {
+  type: 'FeatureCollection',
+  features: [],
+  meta: { returned: 0, total: 0, truncated: false },
+}
 
 export function buildPlacesUrl(bounds: MapBounds, limit = 500): string {
   const parameters = new URLSearchParams({
@@ -78,7 +87,20 @@ export function buildPlacesUrl(bounds: MapBounds, limit = 500): string {
 function isPlaceFeatureCollection(value: unknown): value is PlaceFeatureCollection {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<PlaceFeatureCollection>
-  return candidate.type === 'FeatureCollection' && Array.isArray(candidate.features)
+  return candidate.type === 'FeatureCollection'
+    && Array.isArray(candidate.features)
+    && candidate.meta !== undefined
+    && Number.isInteger(candidate.meta.returned)
+    && candidate.meta.returned === candidate.features.length
+    && Number.isInteger(candidate.meta.total)
+    && candidate.meta.total >= candidate.meta.returned
+    && typeof candidate.meta.truncated === 'boolean'
+    && candidate.meta.truncated === (candidate.meta.total > candidate.meta.returned)
+}
+
+export function placesForMap(collection: PlaceFeatureCollection): PlaceFeatureCollection {
+  if (!collection.meta.truncated) return collection
+  return { ...collection, features: [] }
 }
 
 export async function loadPlaces(

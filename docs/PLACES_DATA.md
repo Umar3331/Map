@@ -48,20 +48,25 @@ invented or rendered as an empty placeholder.
 
 `GET /api/v1/places` requires west/south/east/north bounds, accepts one optional curated category,
 and returns a compact GeoJSON FeatureCollection. The limit defaults to 250 and cannot exceed 500.
-The query uses the GiST geometry index before exact intersection filtering. Details and provenance
-are loaded on demand from `GET /api/v1/places/{id}`.
+The response metadata reports returned count, total matching count, and whether the result was
+truncated. Both list and count queries use the same active-status, optional-category, and spatial
+filters; the GiST geometry index is applied before exact intersection filtering. Details and
+provenance are loaded on demand from `GET /api/v1/places/{id}`.
 
 The browser replaces the MapLibre GeoJSON source after a debounced map movement. MapLibre performs
 clustering in its worker; the API does not ship the entire city catalogue. Selecting an unclustered
-point fetches its detail record. Place API failures show a small status message but leave the local
-vector basemap interactive.
+point fetches its detail record. If a bounded response is truncated, the browser clears those partial
+features instead of displaying misleading cluster counts and shows “Zoom in to see all places.”
+Place API failures show a small status message but leave the local vector basemap interactive.
 
 On the Windows reference import made on 2026-08-16, 5,023 named candidates produced 4,724 active
 places. Repeating the import preserved all 4,724 active identities and produced no duplicate source
 IDs. A representative city-centre bounds query used the spatial index and completed inside Postgres
-in about 2.5 ms; its 500-feature response was about 95 KB. Host-to-container HTTP timing was roughly
-0.21-0.25 seconds on that machine. Measurements vary with hardware, bounds, cache state, and source
-snapshot.
+in about 2.5 ms; its 500-feature response was about 95 KB. The same-filter count query measured about
+3.0 ms for both a typical viewport and the full buffered bounds. PostgreSQL used `places_geom_idx`
+for the typical viewport and correctly preferred a sequential scan when the bounds covered every
+place. Host-to-container HTTP timing was roughly 0.21-0.25 seconds on that machine. Measurements vary
+with hardware, bounds, cache state, and source snapshot.
 
 ## Attribution and licence
 

@@ -133,6 +133,7 @@ button, input { font: inherit; }
   pointer-events: none;
 }
 .places-status-error { color: #873e34; }
+.places-status-guidance { color: #285f50; }
 
 .place-details {
   position: absolute;

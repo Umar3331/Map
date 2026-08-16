@@ -1,6 +1,13 @@
 import { afterEach, expect, it, vi } from 'vitest'
 
-import { buildPlacesUrl, loadPlaceDetails, loadPlaces, placeCategoryLabel } from './places'
+import {
+  buildPlacesUrl,
+  loadPlaceDetails,
+  loadPlaces,
+  placeCategoryLabel,
+  placesForMap,
+  type PlaceFeatureCollection,
+} from './places'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -12,7 +19,11 @@ it('builds a bounded viewport request with a hard result limit', () => {
 })
 
 it('loads and validates a GeoJSON place collection', async () => {
-  const payload = { type: 'FeatureCollection', features: [] }
+  const payload = {
+    type: 'FeatureCollection',
+    features: [],
+    meta: { returned: 0, total: 0, truncated: false },
+  }
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(payload) }))
   await expect(loadPlaces({ west: 25.1, south: 54.55, east: 25.5, north: 54.85 })).resolves.toEqual(payload)
 })
@@ -26,4 +37,21 @@ it('rejects malformed place payloads and failed detail requests', async () => {
 
 it('provides normalized category labels', () => {
   expect(placeCategoryLabel('food_drink')).toBe('Food & Drink')
+})
+
+it('removes incomplete viewport features instead of presenting partial clusters', () => {
+  const collection = {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      id: 1,
+      geometry: { type: 'Point', coordinates: [25.28, 54.69] },
+      properties: { id: 1, name: 'Cafe', category: 'food_drink', subcategory: 'cafe' },
+    }],
+    meta: { returned: 1, total: 10, truncated: true },
+  } satisfies PlaceFeatureCollection
+
+  expect(placesForMap(collection)).toEqual({ ...collection, features: [] })
+  expect(placesForMap({ ...collection, meta: { returned: 1, total: 1, truncated: false } }))
+    .toEqual({ ...collection, meta: { returned: 1, total: 1, truncated: false } })
 })

@@ -83,10 +83,12 @@ OSM records inactive instead of reassigning their internal IDs.
 
 FastAPI exposes bounded read-only queries through `/api/v1/places` and full records through
 `/api/v1/places/{id}`. The list query uses the `places_geom_idx` GiST index and returns compact
-GeoJSON capped at 500 features. A small database connection pool avoids reconnecting during map
-pans. The PWA debounces `moveend`, aborts stale requests, and updates one MapLibre GeoJSON source.
-Native cluster, cluster-count, category circle, and selected-place layers remain above the basemap;
-React renders only the details panel, never thousands of DOM markers.
+GeoJSON capped at 500 features plus returned/total/truncated metadata. A same-filter count query
+makes the bounded response explicit. A small database connection pool avoids reconnecting during
+map pans. The PWA debounces `moveend`, aborts stale requests, and updates one MapLibre GeoJSON source.
+Native cluster, cluster-count, category circle, and selected-place layers remain above the basemap.
+Clustering runs only for complete responses; truncated broad views clear partial features and show
+zoom guidance. React renders only the details panel, never thousands of DOM markers.
 
 ## Configuration and persistence
 
