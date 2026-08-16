@@ -257,6 +257,69 @@ button, input { font: inherit; }
 .place-details dd { margin: 0; color: #25473d; overflow-wrap: anywhere; }
 .place-details a { color: #176d59; font-weight: 650; }
 .place-attribution { margin: 20px 0 0; color: #7b8b86; font-size: 11px; }
+.place-providers, .provider-services, .provider-locations { margin-top: 22px; }
+.place-providers h2, .provider-services h2, .provider-locations h2 {
+  margin: 0 0 10px;
+  color: #24483e;
+  font-size: 16px;
+}
+.place-providers > p { margin: 0; color: #71877f; font-size: 13px; }
+.provider-summary {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid #d6e3dd;
+  border-radius: 14px;
+  color: #24594c;
+  background: #f0f6f3;
+  text-align: left;
+  cursor: pointer;
+}
+.provider-summary span:first-child { display: grid; gap: 3px; }
+.provider-summary strong { color: #173d33; font-size: 14px; }
+.provider-summary small { color: #678078; font-size: 12px; }
+.provider-inline-error { margin: 18px 0 0; color: #873e34; font-size: 12px; }
+.provider-profile-actions { min-height: 34px; }
+.provider-back {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  color: #286453;
+  background: #e7efeb;
+  font-weight: 700;
+  cursor: pointer;
+}
+.provider-eyebrow {
+  display: inline-block;
+  margin-top: 14px;
+  color: #31866f;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.provider-profile h1 { margin-top: 7px; }
+.service-group + .service-group { margin-top: 14px; }
+.service-group h3 { margin: 0 0 7px; color: #71877f; font-size: 12px; text-transform: uppercase; }
+.service-group ul, .provider-locations ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.service-group li, .provider-locations li {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f2f6f3;
+  color: #31564a;
+  font-size: 13px;
+}
+.service-group li span, .provider-locations li span { color: #6a8079; font-size: 12px; }
+.service-group li small { color: #397261; }
+.provider-profile-state { display: grid; gap: 18px; align-content: start; }
+.provider-profile-state p { margin: 0; color: #49665d; }
 
 @keyframes pulse { 50% { opacity: .35; transform: scale(.78); } }
 

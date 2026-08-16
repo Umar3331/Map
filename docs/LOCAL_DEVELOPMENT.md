@@ -6,6 +6,7 @@ The normal full stack runs in Docker:
 .\scripts\setup.ps1
 .\scripts\map-data.ps1
 .\scripts\places-data.ps1
+.\scripts\provider-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 docker compose ps
@@ -128,3 +129,18 @@ latitude/longitude are optional ranking context, not hard geographic filters. Se
 Internet access after the normal local OSM import. Recognized category terms use taxonomy discovery;
 active results temporarily replace normal viewport POIs with a bounded search-result layer. See
 `docs/SEARCH.md` for the full contract and ranking rules.
+
+## Provider and service data
+
+Run the provider seed after place data is populated and whenever the PostGIS volume is new:
+
+```powershell
+.\scripts\provider-data.ps1
+.\scripts\validate-providers.ps1
+```
+
+The seed reads only active `app.places` rows in the curated service-oriented taxonomy. It creates or
+updates provider identity, exact provider-to-place links, normalized service assignments, source
+provenance, and import metrics. Running it repeatedly is safe and must preserve provider, location,
+and assignment counts. It does not group repeated brands by name and does not invent price or
+duration data. See `docs/PROVIDERS.md` for the model, mappings, API, and limitations.

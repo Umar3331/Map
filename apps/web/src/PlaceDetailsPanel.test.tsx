@@ -50,3 +50,29 @@ it('omits labels for missing optional fields', () => {
   expect(screen.queryByText('Hours')).not.toBeInTheDocument()
   expect(screen.getByText('Vilnius')).toBeInTheDocument()
 })
+
+it('shows a provider summary and opens the profile', () => {
+  const onOpenProvider = vi.fn()
+  render(
+    <PlaceDetailsPanel
+      place={place}
+      providers={[{
+        id: 21,
+        display_name: 'Lemon Gym',
+        description: null,
+        is_primary: true,
+        service_count: 2,
+      }]}
+      onOpenProvider={onOpenProvider}
+      onClose={() => undefined}
+    />,
+  )
+  expect(screen.getByRole('heading', { name: 'Provider' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /Lemon Gym/ }))
+  expect(onOpenProvider).toHaveBeenCalledWith(21)
+})
+
+it('does not show an empty provider section for places without providers', () => {
+  render(<PlaceDetailsPanel place={place} providers={[]} onClose={() => undefined} />)
+  expect(screen.queryByRole('heading', { name: 'Provider' })).not.toBeInTheDocument()
+})

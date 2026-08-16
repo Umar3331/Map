@@ -1,7 +1,7 @@
 # Map
 
 Map is a local-first location and services discovery platform currently focused on Vilnius. Its
-implemented flow is **map → browse places → search/discovery → place details**. The longer-term
+implemented flow is **map → browse places → search/discovery → place details → provider/services**. The longer-term
 direction is **need → discovery → provider/service comparison → availability → booking/action**;
 provider comparison, availability, and booking are not implemented yet.
 
@@ -12,13 +12,15 @@ provider comparison, availability, and booking are not implemented yet.
 - 4,724 application-owned places with category-aware browsing, clustering, and responsive details.
 - Local PostgreSQL-backed exact, prefix, fuzzy, and category-intent search.
 - Search-result map mode that focuses discovery while preserving normal place browsing when cleared.
+- Provider profiles with physical locations, normalized service offerings, and source provenance.
 - Fully local runtime after the source data has been downloaded and imported.
 
 ## Project status
 
 - **Complete:** Milestone 1 (Vilnius PWA foundation), Milestone 1.1 (self-hosted basemap), Milestone 2
   (places/local businesses), and Milestone 3 (search/discovery).
-- **Next:** Milestone 4 — service-provider profiles. This work has not started.
+- **In progress:** Milestone 4 — service-provider profiles. Windows production-browser acceptance is
+  complete; physical-iPhone acceptance remains outstanding.
 
 See the [full roadmap](docs/ROADMAP.md) for the remaining direction and sequencing.
 
@@ -40,10 +42,15 @@ flowchart TB
 
     subgraph DB["PostgreSQL + PostGIS"]
         APP["app.places<br/>application-owned place/search domain"]
+        PROVIDERS["app.providers + provider_locations<br/>durable business/location domain"]
+        SERVICES["app.service_types + provider_services<br/>normalized offerings"]
         OSM["osm.*<br/>basemap/import geography"]
     end
 
     A --> APP
+    A --> PROVIDERS
+    PROVIDERS --> SERVICES
+    PROVIDERS --> APP
     M --> OSM
     APP --> S["PostgreSQL place search"]
 
@@ -68,6 +75,7 @@ Copy-Item .env.example .env
 .\scripts\setup.ps1
 .\scripts\map-data.ps1
 .\scripts\places-data.ps1
+.\scripts\provider-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 ```
@@ -75,8 +83,9 @@ Copy-Item .env.example .env
 Open `http://localhost:5173`. The start script also prints the active LAN URL and optional HTTPS PWA
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
-Place browsing and search are available after `.\scripts\places-data.ps1` completes. Acceptance for
-Milestones 1 through 3, including physical-iPhone validation, is recorded in
+Place browsing and search are available after `.\scripts\places-data.ps1` completes. Provider and
+service profiles are seeded by `.\scripts\provider-data.ps1`. Acceptance for Milestones 1 through 3
+and the current Milestone 4 gate are recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
 ## Self-hosted Vilnius map data
@@ -109,6 +118,16 @@ the map shows the search context. Selecting a result moves the map to zoom 16 an
 place-details card or mobile bottom sheet. See
 [search architecture and behavior](docs/SEARCH.md).
 
+## Vilnius providers and services
+
+Milestone 4 keeps geographic places separate from durable provider identities and normalized service
+offerings. The repeatable local seed conservatively creates one provider for each eligible
+service-oriented OSM place, links it through `app.provider_locations`, and assigns only curated
+taxonomy-backed services. Place details show a compact provider summary; opening it reuses the
+responsive desktop card/mobile bottom sheet for profile, service, location, and provenance data.
+No prices, durations, availability, booking, claims, or provider accounts are inferred. See
+[provider data and behavior](docs/PROVIDERS.md).
+
 ## Repository
 
 - `apps/web` — active React/TypeScript/MapLibre PWA
@@ -125,6 +144,7 @@ place-details card or mobile bottom sheet. See
 - [Acceptance](docs/ACCEPTANCE.md)
 - [Place data and provenance](docs/PLACES_DATA.md)
 - [Search](docs/SEARCH.md)
+- [Providers and services](docs/PROVIDERS.md)
 - [Local development](docs/LOCAL_DEVELOPMENT.md)
 - [iPhone installation](docs/IPHONE_INSTALLATION.md)
 

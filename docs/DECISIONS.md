@@ -156,3 +156,15 @@ unclustered MapLibre GeoJSON source while hiding normal place layers, then resto
 on clear or dismiss. **Consequences:** Category discovery is complete with respect to its explicit
 taxonomy mapping but still bounded to 25 ranked results. Search markers represent returned results,
 not a total category count. Alias mappings require tests against the imported taxonomy.
+
+## ADR-024 — Separate place, provider, location, and service domains
+**Status:** Accepted. **Context:** A geographic POI is not a durable business identity, and a provider
+may eventually operate at multiple places or offer multiple normalized services. Adding provider
+fields directly to `app.places` would couple replaceable OSM location data to future provider and
+booking workflows. **Decision:** Keep `app.providers`, `app.provider_locations`, `app.service_types`,
+`app.provider_services`, `app.provider_sources`, and `app.provider_import_runs` as explicit
+application-owned boundaries. Seed only selected local-service taxonomies from `app.places`, using
+exact source identity and one provider per source place until reliable entity resolution exists.
+**Consequences:** Address and geometry stay on places; provider provenance and lifecycle are durable;
+multi-location grouping is structurally possible but deliberately not inferred from names. Prices,
+durations, verification, claims, availability, booking, and provider management remain unimplemented.

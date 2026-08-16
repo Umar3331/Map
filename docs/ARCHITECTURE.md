@@ -113,6 +113,25 @@ the search source and restores normal viewport clustering. Selecting a result ea
 16, highlights it in the search source, loads `/api/v1/places/{id}`, and opens the existing details
 UI. Search remains entirely inside the same-origin local chain: browser → Caddy → FastAPI → PostgreSQL.
 
+## Providers and services
+
+`app.places` remains the geographic POI boundary. `app.providers` holds durable business identity;
+`app.provider_locations` links a provider to one or more places without copying address or geometry.
+`app.service_types` is a small normalized catalogue, and `app.provider_services` records which types
+a provider offers. Nullable price and duration columns are structural only and remain empty unless a
+future trustworthy source supplies them.
+
+The initial local seed reads active `app.places` rows in selected service-oriented taxonomies. It
+uses the exact place source and external ID as provider provenance and creates one provider per source
+place. No fuzzy name grouping is performed: repeated brands can be resolved into multi-location
+providers later without risking false merges now. `app.provider_sources` retains source identity and
+links back to the originating place, while `app.provider_import_runs` records repeatable import counts.
+
+FastAPI exposes provider details, provider services, and compact providers for a place. The PWA first
+shows the compact provider link in place details, then loads the provider profile and services into
+the existing responsive panel/bottom sheet. Search still targets `app.places`; provider/service search
+and all management, verification, availability, booking, and payment workflows remain deferred.
+
 ## Configuration and persistence
 
 `.env` owns ports and `MAP_HOST`; it is never committed. `setup.ps1` detects an active LAN address

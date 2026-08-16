@@ -16,6 +16,19 @@ if ($Search.query -ne 'maxima' -or $Search.meta.returned -ne 1 `
     -or $Search.results.Count -ne 1 -or $Search.results[0].name -notmatch '^Maxima') {
     throw 'Map search endpoint returned unexpected data.'
 }
+$ProviderSearch = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/search?q=gym&limit=1" -TimeoutSec 10
+$ProviderPlaceId = $ProviderSearch.results[0].id
+$PlaceProviders = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/places/${ProviderPlaceId}/providers" -TimeoutSec 10
+if ($PlaceProviders.meta.returned -lt 1 -or $PlaceProviders.providers[0].service_count -lt 1) {
+    throw 'Map provider endpoint returned unexpected data. Run .\scripts\provider-data.ps1 first.'
+}
+$ProviderId = $PlaceProviders.providers[0].id
+$Provider = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/providers/${ProviderId}" -TimeoutSec 10
+$Services = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/providers/${ProviderId}/services" -TimeoutSec 10
+if (-not $Provider.display_name -or $Provider.locations.Count -lt 1 -or $Provider.sources.Count -lt 1 `
+    -or $Services.meta.returned -lt 1) {
+    throw 'Map provider profile or services returned unexpected data.'
+}
 $Health | ConvertTo-Json
 $Config | ConvertTo-Json -Depth 4
-Write-Host "PWA gateway, API health, Vilnius configuration, bounded places, and search checks passed ($($Places.features.Count) places)." -ForegroundColor Green
+Write-Host "PWA gateway, API health, Vilnius configuration, places, search, and provider checks passed ($($Places.features.Count) places)." -ForegroundColor Green

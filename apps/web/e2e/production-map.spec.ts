@@ -369,3 +369,98 @@ test('mobile search transitions cleanly into the existing details sheet', async 
   const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-search-mobile.png') })
   expect(screenshot.byteLength).toBeGreaterThan(50_000)
 })
+
+test('provider-backed places open service profiles and return to place details', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  const runtimeUrls: string[] = []
+  page.on('request', (request) => {
+    if (/^https?:/.test(request.url())) runtimeUrls.push(request.url())
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/', { waitUntil: 'load' })
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  await input.fill('gym')
+  await expect(page.getByRole('option').first()).toBeVisible()
+  await page.getByRole('option').first().click()
+
+  const placePanel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(placePanel).toBeVisible()
+  await expect(placePanel.getByRole('heading', { name: 'Provider' })).toBeVisible()
+  const gymProvider = placePanel.locator('.provider-summary').first()
+  await expect(gymProvider).toContainText(/2 services/i)
+  await gymProvider.click()
+
+  const providerPanel = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(providerPanel).toBeVisible()
+  await expect(providerPanel.getByRole('heading', { name: 'Services' })).toBeVisible()
+  await expect(providerPanel.getByText('Gym membership')).toBeVisible()
+  await expect(providerPanel.getByText('Group fitness')).toBeVisible()
+  await expect(providerPanel.getByRole('heading', { name: 'Locations' })).toBeVisible()
+  expect(await providerPanel.getByText(/\b(?:EUR|min)\b/).count()).toBe(0)
+
+  const gymScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-provider-profile-desktop.png'),
+  })
+  expect(gymScreenshot.byteLength).toBeGreaterThan(50_000)
+
+  await page.getByRole('button', { name: 'Back to place details' }).click()
+  await expect(placePanel).toBeVisible()
+  await page.getByRole('button', { name: 'Close place details' }).click()
+  await page.getByRole('button', { name: 'Clear search' }).click()
+
+  await input.fill('car repair')
+  await expect(page.getByRole('option').first()).toContainText(/Car Repair/i)
+  await page.getByRole('option').first().click()
+  const secondPlacePanel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(secondPlacePanel.getByRole('heading', { name: 'Provider' })).toBeVisible()
+  await secondPlacePanel.locator('.provider-summary').first().click()
+  const secondProviderPanel = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(secondProviderPanel.getByText('Vehicle repair')).toBeVisible()
+  await page.getByRole('button', { name: 'Close provider profile' }).click()
+  await expect(secondProviderPanel).not.toBeVisible()
+
+  expect(runtimeErrors).toEqual([])
+  const origin = new URL(page.url()).origin
+  expect([...new Set(runtimeUrls.map((url) => new URL(url).origin))]).toEqual([origin])
+})
+
+test('provider profile is usable in an iPhone-sized bottom sheet', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/', { waitUntil: 'load' })
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  await input.fill('gym')
+  await expect(page.getByRole('option').first()).toBeVisible()
+  await page.getByRole('option').first().click()
+  const placePanel = page.getByRole('dialog', { name: 'Place details' })
+  await expect(placePanel.locator('.provider-summary').first()).toBeVisible()
+  await placePanel.locator('.provider-summary').first().click()
+
+  const providerPanel = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(providerPanel.getByText('Gym membership')).toBeVisible()
+  const panelBox = await providerPanel.boundingBox()
+  if (!panelBox) throw new Error('Mobile provider profile has no rendered bounds')
+  expect(panelBox.x).toBeGreaterThanOrEqual(0)
+  expect(panelBox.x + panelBox.width).toBeLessThanOrEqual(390)
+  expect(panelBox.y + panelBox.height).toBeGreaterThan(820)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+
+  const screenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-provider-profile-mobile.png'),
+  })
+  expect(screenshot.byteLength).toBeGreaterThan(50_000)
+
+  await page.getByRole('button', { name: 'Back to place details' }).click()
+  await expect(placePanel).toBeVisible()
+  await page.getByRole('button', { name: 'Close place details' }).click()
+  expect(runtimeErrors).toEqual([])
+})

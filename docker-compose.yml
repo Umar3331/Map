@@ -47,6 +47,7 @@ services:
       - postgis-data:/var/lib/postgresql/data
       - ./infrastructure/local/postgres/init:/docker-entrypoint-initdb.d:ro
       - ./infrastructure/local/postgres/places:/places:ro
+      - ./infrastructure/local/postgres/providers:/providers:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s

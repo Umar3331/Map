@@ -8,6 +8,15 @@ import { createVilniusStyle } from './mapStyle'
 import { installPlaceLayers, placeLayerIds, placeSourceId, updatePlaceSource } from './placeLayers'
 import { PlaceDetailsPanel } from './PlaceDetailsPanel'
 import { loadPlaceDetails, loadPlaces, placesForMap, type PlaceDetails } from './places'
+import { ProviderProfilePanel } from './ProviderProfilePanel'
+import {
+  loadPlaceProviders,
+  loadProviderProfile,
+  loadProviderServices,
+  type ProviderProfile,
+  type ProviderService,
+  type ProviderSummary,
+} from './providers'
 import { SearchBox } from './SearchBox'
 import type { SearchContext, SearchResult } from './search'
 import {
@@ -29,6 +38,15 @@ export function MapView({ config }: MapViewProps) {
   const updateSearchResultsRef = useRef<(results: SearchResult[]) => void>(() => undefined)
   const searchSelectionRef = useRef(false)
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
+  const [placeProviders, setPlaceProviders] = useState<ProviderSummary[]>([])
+  const [providersStatus, setProvidersStatus] = useState<'loading' | 'ready' | 'error'>('ready')
+  const [providerView, setProviderView] = useState<
+    | { status: 'loading' }
+    | { status: 'ready'; provider: ProviderProfile; services: ProviderService[] }
+    | { status: 'error' }
+    | null
+  >(null)
+  const providerProfileControllerRef = useRef<AbortController | null>(null)
   const [searchContext, setSearchContext] = useState<SearchContext | null>(null)
   const [searchActive, setSearchActive] = useState(false)
   const [placesStatus, setPlacesStatus] = useState<
@@ -48,6 +66,7 @@ export function MapView({ config }: MapViewProps) {
     let viewportTimer: ReturnType<typeof setTimeout> | undefined
     let placesController: AbortController | undefined
     let detailsController: AbortController | undefined
+    let providersController: AbortController | undefined
     let disposed = false
     let viewportRequests = 0
     const map = new maplibregl.Map({
@@ -131,13 +150,28 @@ export function MapView({ config }: MapViewProps) {
         map.setFilter(placeLayerIds.selected, ['==', ['id'], placeId])
       }
       detailsController?.abort()
+      providersController?.abort()
       detailsController = new AbortController()
+      providersController = new AbortController()
+      setPlaceProviders([])
+      setProvidersStatus('loading')
+      setProviderView(null)
       try {
         const details = await loadPlaceDetails(placeId, detailsController.signal)
         if (!disposed) setSelectedPlace(details)
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
         if (!disposed) setPlacesStatus('error')
+      }
+      try {
+        const summaries = await loadPlaceProviders(placeId, providersController.signal)
+        if (!disposed) {
+          setPlaceProviders(summaries)
+          setProvidersStatus('ready')
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        if (!disposed) setProvidersStatus('error')
       }
     }
 
@@ -257,6 +291,8 @@ export function MapView({ config }: MapViewProps) {
       if (viewportTimer) clearTimeout(viewportTimer)
       placesController?.abort()
       detailsController?.abort()
+      providersController?.abort()
+      providerProfileControllerRef.current?.abort()
       selectPlaceRef.current = () => undefined
       updateSearchResultsRef.current = () => undefined
       mapRef.current = null
@@ -275,7 +311,28 @@ export function MapView({ config }: MapViewProps) {
     if (containerRef.current) delete containerRef.current.dataset.selectedPlaceId
     if (containerRef.current) delete containerRef.current.dataset.searchSelectedPlaceId
     searchSelectionRef.current = false
+    providerProfileControllerRef.current?.abort()
+    setProviderView(null)
+    setPlaceProviders([])
+    setProvidersStatus('ready')
     setSelectedPlace(null)
+  }
+
+  const openProvider = async (providerId: number) => {
+    providerProfileControllerRef.current?.abort()
+    const controller = new AbortController()
+    providerProfileControllerRef.current = controller
+    setProviderView({ status: 'loading' })
+    try {
+      const [provider, services] = await Promise.all([
+        loadProviderProfile(providerId, controller.signal),
+        loadProviderServices(providerId, controller.signal),
+      ])
+      setProviderView({ status: 'ready', provider, services })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setProviderView({ status: 'error' })
+    }
   }
 
   const clearSearchSelection = () => {
@@ -308,7 +365,37 @@ export function MapView({ config }: MapViewProps) {
         </div>
       )}
       {!searchActive && placesStatus === 'error' && <div className="places-status places-status-error" role="alert">Places are temporarily unavailable</div>}
-      {selectedPlace && <PlaceDetailsPanel place={selectedPlace} onClose={closeDetails} />}
+      {selectedPlace && providerView?.status === 'ready' && (
+        <ProviderProfilePanel
+          provider={providerView.provider}
+          services={providerView.services}
+          onBack={() => setProviderView(null)}
+          onClose={closeDetails}
+        />
+      )}
+      {selectedPlace && providerView?.status === 'loading' && (
+        <aside className="place-details provider-profile-state" role="dialog" aria-label="Provider profile">
+          <button className="provider-back" type="button" onClick={() => setProviderView(null)}>← Place</button>
+          <button className="place-details-close" type="button" onClick={closeDetails} aria-label="Close provider profile">×</button>
+          <p role="status">Loading provider profile…</p>
+        </aside>
+      )}
+      {selectedPlace && providerView?.status === 'error' && (
+        <aside className="place-details provider-profile-state" role="dialog" aria-label="Provider profile">
+          <button className="provider-back" type="button" onClick={() => setProviderView(null)}>← Place</button>
+          <button className="place-details-close" type="button" onClick={closeDetails} aria-label="Close provider profile">×</button>
+          <p role="alert">Provider profile is temporarily unavailable</p>
+        </aside>
+      )}
+      {selectedPlace && providerView === null && (
+        <PlaceDetailsPanel
+          place={selectedPlace}
+          providers={placeProviders}
+          providersStatus={providersStatus}
+          onOpenProvider={(providerId) => { void openProvider(providerId) }}
+          onClose={closeDetails}
+        />
+      )}
     </>
   )
 }
