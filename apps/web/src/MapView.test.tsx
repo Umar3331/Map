@@ -25,6 +25,7 @@ vi.mock('maplibre-gl', () => ({
     project = vi.fn(() => ({ x: 100, y: 100 }))
     easeTo = vi.fn()
     setFilter = vi.fn()
+    setLayoutProperty = vi.fn()
     on(eventName: string, layerOrHandler: unknown, possibleHandler?: unknown) {
       const handler = (typeof layerOrHandler === 'function' ? layerOrHandler : possibleHandler) as
         (event: { error?: Error; sourceId?: string; sourceDataType?: string }) => void

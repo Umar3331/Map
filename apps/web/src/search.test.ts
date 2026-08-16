@@ -13,13 +13,13 @@ it('builds a bounded local search request with geographic bias', () => {
 })
 
 it('validates search response metadata', async () => {
-  const payload = { query: 'maxima', results: [], meta: { returned: 0 } }
+  const payload = { query: 'maxima', results: [], meta: { returned: 0, intent: 'name' } }
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
   await expect(loadSearch('maxima')).resolves.toEqual(payload)
 
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
     ok: true,
-    json: async () => ({ ...payload, meta: { returned: 1 } }),
+    json: async () => ({ ...payload, meta: { returned: 1, intent: 'name' } }),
   }))
   await expect(loadSearch('maxima')).rejects.toThrow('Search response is invalid')
 })

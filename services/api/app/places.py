@@ -45,9 +45,10 @@ class PlacesRepository(Protocol):
         self,
         *,
         query: str,
+        category_intent: bool,
         category: str | None,
         alias_category: str | None,
-        alias_subcategory: str | None,
+        alias_subcategories: tuple[str, ...],
         west: float | None,
         south: float | None,
         east: float | None,
@@ -183,9 +184,10 @@ class PostgresPlacesRepository:
         self,
         *,
         query: str,
+        category_intent: bool,
         category: str | None,
         alias_category: str | None,
-        alias_subcategory: str | None,
+        alias_subcategories: tuple[str, ...],
         west: float | None,
         south: float | None,
         east: float | None,
@@ -209,13 +211,17 @@ class PostgresPlacesRepository:
                     ST_Y(place.geom) AS latitude,
                     similarity(place.normalized_name, %(query)s) AS name_similarity,
                     CASE
+                        WHEN place.subcategory = ANY(
+                            CAST(%(alias_subcategories)s AS text[])
+                        ) THEN 2
+                        WHEN CAST(%(alias_category)s AS text) IS NOT NULL
+                          AND place.category = CAST(%(alias_category)s AS text) THEN 1
+                        ELSE 0
+                    END AS taxonomy_relevance,
+                    CASE
                         WHEN place.normalized_name = %(query)s THEN 100
                         WHEN place.normalized_name LIKE %(query)s || '%%' THEN 90
                         WHEN similarity(place.normalized_name, %(query)s) >= 0.55 THEN 80
-                        WHEN CAST(%(alias_subcategory)s AS text) IS NOT NULL
-                          AND place.subcategory = CAST(%(alias_subcategory)s AS text) THEN 70
-                        WHEN CAST(%(alias_category)s AS text) IS NOT NULL
-                          AND place.category = CAST(%(alias_category)s AS text) THEN 65
                         WHEN place.normalized_name LIKE '%%' || %(query)s || '%%' THEN 60
                         ELSE 50
                     END AS relevance,
@@ -248,14 +254,17 @@ class PostgresPlacesRepository:
                   AND (CAST(%(category)s AS text) IS NULL
                     OR place.category = CAST(%(category)s AS text))
                   AND (
-                    place.normalized_name = %(query)s
-                    OR place.normalized_name LIKE %(query)s || '%%'
-                    OR place.normalized_name LIKE '%%' || %(query)s || '%%'
-                    OR place.normalized_name %% %(query)s
-                    OR (CAST(%(alias_category)s AS text) IS NOT NULL
-                        AND place.category = CAST(%(alias_category)s AS text))
-                    OR (CAST(%(alias_subcategory)s AS text) IS NOT NULL
-                        AND place.subcategory = CAST(%(alias_subcategory)s AS text))
+                    (CAST(%(category_intent)s AS boolean) AND (
+                        place.subcategory = ANY(CAST(%(alias_subcategories)s AS text[]))
+                        OR (CAST(%(alias_category)s AS text) IS NOT NULL
+                            AND place.category = CAST(%(alias_category)s AS text))
+                    ))
+                    OR (NOT CAST(%(category_intent)s AS boolean) AND (
+                        place.normalized_name = %(query)s
+                        OR place.normalized_name LIKE %(query)s || '%%'
+                        OR place.normalized_name LIKE '%%' || %(query)s || '%%'
+                        OR place.normalized_name %% %(query)s
+                    ))
                   )
             )
             SELECT
@@ -263,19 +272,24 @@ class PostgresPlacesRepository:
                 longitude, latitude, distance_m
             FROM ranked
             ORDER BY
-                relevance DESC,
-                name_similarity DESC,
+                CASE WHEN CAST(%(category_intent)s AS boolean)
+                    THEN taxonomy_relevance ELSE relevance END DESC,
+                CASE WHEN CAST(%(category_intent)s AS boolean)
+                    THEN (normalized_name = %(query)s)::integer ELSE 0 END DESC,
                 in_viewport DESC,
                 distance_m ASC NULLS LAST,
+                CASE WHEN NOT CAST(%(category_intent)s AS boolean)
+                    THEN name_similarity ELSE 0 END DESC,
                 normalized_name,
                 id
             LIMIT %(limit)s
         """
         parameters = {
             "query": query,
+            "category_intent": category_intent,
             "category": category,
             "alias_category": alias_category,
-            "alias_subcategory": alias_subcategory,
+            "alias_subcategories": list(alias_subcategories),
             "has_viewport": has_viewport,
             "west": west,
             "south": south,

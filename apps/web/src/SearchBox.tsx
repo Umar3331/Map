@@ -12,12 +12,19 @@ type SearchBoxProps = {
   regionName: string
   context: SearchContext | null
   onClear: () => void
+  onResultsChange: (results: SearchResult[]) => void
   onSelect: (result: SearchResult) => void
 }
 
 type SearchStatus = 'idle' | 'short' | 'loading' | 'ready' | 'empty' | 'error'
 
-export function SearchBox({ regionName, context, onClear, onSelect }: SearchBoxProps) {
+export function SearchBox({
+  regionName,
+  context,
+  onClear,
+  onResultsChange,
+  onSelect,
+}: SearchBoxProps) {
   const listboxId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
@@ -35,13 +42,16 @@ export function SearchBox({ regionName, context, onClear, onSelect }: SearchBoxP
     const timer = window.setTimeout(() => {
       loadSearch(normalizedQuery, context, controller.signal)
         .then((response) => {
+          if (controller.signal.aborted) return
           setResults(response.results)
+          onResultsChange(response.results)
           setActiveIndex(0)
           setStatus(response.results.length ? 'ready' : 'empty')
         })
         .catch((error: unknown) => {
           if (error instanceof DOMException && error.name === 'AbortError') return
           setResults([])
+          onResultsChange([])
           setStatus('error')
         })
     }, 250)
@@ -50,7 +60,7 @@ export function SearchBox({ regionName, context, onClear, onSelect }: SearchBoxP
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [context, open, query])
+  }, [context, onResultsChange, open, query])
 
   const chooseResult = (result: SearchResult) => {
     setOpen(false)
@@ -62,12 +72,14 @@ export function SearchBox({ regionName, context, onClear, onSelect }: SearchBoxP
     setResults([])
     setStatus('idle')
     setOpen(false)
+    onResultsChange([])
     onClear()
     inputRef.current?.blur()
   }
 
   const closeSearch = () => {
     setOpen(false)
+    onResultsChange([])
     inputRef.current?.blur()
   }
 
@@ -118,6 +130,7 @@ export function SearchBox({ regionName, context, onClear, onSelect }: SearchBoxP
             const normalizedQuery = nextQuery.trim().replace(/\s+/g, ' ')
             setQuery(nextQuery)
             setResults([])
+            onResultsChange([])
             setStatus(!normalizedQuery ? 'idle' : normalizedQuery.length < 2 ? 'short' : 'loading')
             setOpen(true)
             setActiveIndex(0)

@@ -95,17 +95,21 @@ Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
   without changing canonical names or removing Lithuanian diacritics.
 - [x] PostgreSQL prefix, trigram GIN, category, subcategory, and spatial indexes are installed and
   representative `EXPLAIN ANALYZE` plans avoid inappropriate sequential scans.
-- [x] Text relevance outranks geographic context; viewport membership and distance bias only break
-  roughly equivalent matches.
+- [x] Ordinary brand/name searches use exact, prefix, and fuzzy name relevance before geographic
+  context; recognized aliases use exact application taxonomy as their candidate set.
+- [x] `gym` includes `fitness_centre` records without `gym` in their names, while `Gym+` and
+  `Lemon Gym` remain name-oriented brand searches.
 - [x] Desktop results support Arrow Up/Down, Enter, Escape, clear, and accessible combobox/listbox
   semantics.
 - [x] Result selection moves MapLibre to zoom 16, selects the place, and reuses the existing place
   details card or mobile bottom sheet.
+- [x] Meaningful results activate dedicated unclustered search-result and selected-result layers,
+  hide unrelated normal viewport POIs, and clear/dismiss restores normal clustering.
 - [x] The 390-by-844 production layout has touch-friendly results, a clean search-to-details
   transition, and no horizontal overflow.
 - [x] Live quality checks pass for Maxima, Rimi, cafe, restaurant, pharmacy, gym, hotel, bank, and
   representative prefix/typo queries.
-- [x] Frontend/backend tests, production build, Compose/live validation, five Playwright production
+- [x] Frontend/backend tests, production build, Compose/live validation, six Playwright production
   scenarios, and Windows Edge visual/console checks pass.
 - [ ] Physical-iPhone search, keyboard, result selection, details transition, and clear/back
   acceptance remains for user validation.

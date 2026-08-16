@@ -15,22 +15,23 @@ router = APIRouter(prefix="/api/v1/search", tags=["search"])
 @dataclass(frozen=True)
 class SearchAlias:
     category: str | None = None
-    subcategory: str | None = None
+    subcategories: tuple[str, ...] = ()
 
 
 SEARCH_ALIASES = {
-    "bank": SearchAlias(subcategory="bank"),
-    "cafe": SearchAlias(subcategory="cafe"),
-    "coffee": SearchAlias(subcategory="cafe"),
-    "car repair": SearchAlias(subcategory="car_repair"),
+    "bank": SearchAlias(subcategories=("bank",)),
+    "cafe": SearchAlias(subcategories=("cafe",)),
+    "coffee": SearchAlias(subcategories=("cafe",)),
+    "car repair": SearchAlias(subcategories=("car_repair",)),
     "food": SearchAlias(category="food_drink"),
-    "groceries": SearchAlias(subcategory="supermarket"),
-    "gym": SearchAlias(category="fitness"),
-    "hair": SearchAlias(subcategory="hairdresser"),
-    "hotel": SearchAlias(subcategory="hotel"),
-    "pharmacy": SearchAlias(subcategory="pharmacy"),
-    "restaurant": SearchAlias(subcategory="restaurant"),
-    "supermarket": SearchAlias(subcategory="supermarket"),
+    "groceries": SearchAlias(subcategories=("supermarket",)),
+    "gym": SearchAlias(subcategories=("fitness_centre",)),
+    "hair": SearchAlias(subcategories=("hairdresser",)),
+    "hairdresser": SearchAlias(subcategories=("hairdresser",)),
+    "hotel": SearchAlias(subcategories=("hotel",)),
+    "pharmacy": SearchAlias(subcategories=("pharmacy",)),
+    "restaurant": SearchAlias(subcategories=("restaurant",)),
+    "supermarket": SearchAlias(subcategories=("supermarket",)),
 }
 
 
@@ -95,12 +96,15 @@ def search_places(
             status_code=422, detail="Search origin must include latitude and longitude"
         )
 
-    alias = resolve_search_alias(query)
+    # A literal plus is meaningful in local brands such as Gym+. Do not collapse
+    # that brand query into the generic `gym` discovery alias after normalization.
+    alias = None if "+" in q else resolve_search_alias(query)
     results = repository.search_places(
         query=query,
+        category_intent=alias is not None,
         category=category,
         alias_category=alias.category if alias else None,
-        alias_subcategory=alias.subcategory if alias else None,
+        alias_subcategories=alias.subcategories if alias else (),
         west=west,
         south=south,
         east=east,
@@ -109,4 +113,8 @@ def search_places(
         longitude=longitude,
         limit=limit,
     )
-    return {"query": query, "results": results, "meta": {"returned": len(results)}}
+    return {
+        "query": query,
+        "results": results,
+        "meta": {"returned": len(results), "intent": "category" if alias else "name"},
+    }

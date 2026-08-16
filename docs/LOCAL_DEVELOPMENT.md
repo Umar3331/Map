@@ -125,5 +125,6 @@ installs `pg_trgm`, search normalization, and indexes. Validate the imported sea
 The PWA calls `GET /api/v1/search?q=...&limit=...` through the same origin. The default limit is 10,
 the maximum is 25, and meaningful queries require at least two normalized characters. Bounds and
 latitude/longitude are optional ranking context, not hard geographic filters. Search works without
-Internet access after the normal local OSM import. See `docs/SEARCH.md` for the full contract and
-ranking rules.
+Internet access after the normal local OSM import. Recognized category terms use taxonomy discovery;
+active results temporarily replace normal viewport POIs with a bounded search-result layer. See
+`docs/SEARCH.md` for the full contract and ranking rules.

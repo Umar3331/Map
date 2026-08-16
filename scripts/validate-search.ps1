@@ -40,12 +40,14 @@ function Invoke-MapSearch([string]$Query, [int]$Limit = 10) {
 $Expectations = @(
     @{ Query = 'Maxima'; Match = { param($Item) $Item.name -match 'Maxima' } },
     @{ Query = 'Rimi'; Match = { param($Item) $Item.name -match 'Rimi' } },
-    @{ Query = 'cafe'; Match = { param($Item) $Item.subcategory -eq 'cafe' } },
-    @{ Query = 'restaurant'; Match = { param($Item) $Item.subcategory -eq 'restaurant' } },
-    @{ Query = 'pharmacy'; Match = { param($Item) $Item.subcategory -eq 'pharmacy' } },
-    @{ Query = 'gym'; Match = { param($Item) $Item.category -eq 'fitness' } },
-    @{ Query = 'hotel'; Match = { param($Item) $Item.subcategory -eq 'hotel' } },
-    @{ Query = 'bank'; Match = { param($Item) $Item.subcategory -eq 'bank' } },
+    @{ Query = 'cafe'; Subcategory = 'cafe' },
+    @{ Query = 'restaurant'; Subcategory = 'restaurant' },
+    @{ Query = 'pharmacy'; Subcategory = 'pharmacy' },
+    @{ Query = 'gym'; Subcategory = 'fitness_centre' },
+    @{ Query = 'hotel'; Subcategory = 'hotel' },
+    @{ Query = 'bank'; Subcategory = 'bank' },
+    @{ Query = 'supermarket'; Subcategory = 'supermarket' },
+    @{ Query = 'car repair'; Subcategory = 'car_repair' },
     @{ Query = 'maxma'; Match = { param($Item) $Item.name -match 'Maxima' } },
     @{ Query = 'resturant'; Match = { param($Item) $Item.subcategory -eq 'restaurant' } },
     @{ Query = 'pharmcy'; Match = { param($Item) $Item.subcategory -eq 'pharmacy' } }
@@ -55,13 +57,35 @@ foreach ($Expectation in $Expectations) {
     $Response = Invoke-MapSearch -Query $Expectation.Query
     if ($Response.results.Count -eq 0) { throw "Search returned no results for '$($Expectation.Query)'." }
     $Match = $Expectation.Match
-    $Relevant = @($Response.results | Where-Object { & $Match $_ })
-    if ($Relevant.Count -eq 0) { throw "Search quality failed for '$($Expectation.Query)'." }
+    if ($Expectation.Subcategory) {
+        if ($Response.meta.intent -ne 'category') {
+            throw "Category intent was not reported for '$($Expectation.Query)'."
+        }
+        $Irrelevant = @($Response.results | Where-Object { $_.subcategory -ne $Expectation.Subcategory })
+        if ($Irrelevant.Count -gt 0) {
+            throw "Taxonomy search returned an unrelated result for '$($Expectation.Query)'."
+        }
+    } else {
+        $Relevant = @($Response.results | Where-Object { & $Match $_ })
+        if ($Relevant.Count -eq 0) { throw "Search quality failed for '$($Expectation.Query)'." }
+    }
 }
 
 $Exact = Invoke-MapSearch -Query 'Maxima'
 if ($Exact.results[0].name -ne 'Maxima') { throw 'Exact Maxima match was not ranked first.' }
 $Prefix = Invoke-MapSearch -Query 'Rim'
 if ($Prefix.results[0].name -notmatch 'Rimi') { throw 'Rimi prefix ranking failed.' }
+$Gym = Invoke-MapSearch -Query 'gym'
+if (@($Gym.results | Where-Object { $_.name -notmatch 'gym' }).Count -eq 0) {
+    throw 'Gym discovery did not include a taxonomy match without gym in its name.'
+}
+$GymBrand = Invoke-MapSearch -Query 'Gym+'
+if ($GymBrand.meta.intent -ne 'name' -or $GymBrand.results[0].name -ne 'Gym+') {
+    throw 'Gym+ was incorrectly treated as generic gym category intent.'
+}
+$LemonGym = Invoke-MapSearch -Query 'Lemon Gym'
+if ($LemonGym.meta.intent -ne 'name' -or $LemonGym.results[0].name -notmatch 'Lemon Gym') {
+    throw 'Lemon Gym brand ranking failed.'
+}
 
-Write-Host 'Live Vilnius search quality and index validation passed (11 queries).' -ForegroundColor Green
+Write-Host 'Live Vilnius intent-aware search quality and index validation passed (16 queries).' -ForegroundColor Green

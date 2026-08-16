@@ -144,3 +144,15 @@ results. **Consequences:** Search remains transactional with `app.places`, fully
 operate. Typo tolerance is deliberately lightweight; multilingual stemming, semantic search,
 recommendations, and a dedicated search service remain deferred until measured product needs justify
 them.
+
+## ADR-023 — Intent-aware taxonomy discovery and explicit search map mode
+**Status:** Accepted. **Context:** Treating every query as name-first caused a recognized term such
+as `gym` to over-rank Gym-branded rows and obscure fitness centres whose names lacked that word.
+Showing normal viewport POIs alongside a bounded search result set also made the selected search
+context visually ambiguous. **Decision:** Classify only recognized aliases as category intent and
+use their mapped application taxonomy as the primary candidate set; retain name-first ranking for
+brands, including meaningful punctuation such as `Gym+`. Render active results in a separate,
+unclustered MapLibre GeoJSON source while hiding normal place layers, then restore browsing layers
+on clear or dismiss. **Consequences:** Category discovery is complete with respect to its explicit
+taxonomy mapping but still bounded to 25 ranked results. Search markers represent returned results,
+not a total category count. Alias mappings require tests against the imported taxonomy.

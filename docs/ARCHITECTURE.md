@@ -97,16 +97,21 @@ prefix, substring, and `pg_trgm` similarity matching, with optional category fil
 alias map converts common discovery terms such as `coffee`, `pharmacy`, and `car repair` into the
 existing Map category/subcategory taxonomy; it does not alter stored names or provenance.
 
-Ranking uses discrete text-relevance tiers before any geographic signal. Optional map bounds mark
-results already in the viewport, and an optional map centre supplies spherical distance. These
-signals order only otherwise comparable textual matches, so a nearby unrelated place cannot outrank
-an exact business-name match. Prefix, trigram GIN, subcategory, category, and existing spatial
-indexes keep the query bounded at a maximum of 25 compact results.
+Ranking first classifies the normalized request as name or category intent. Ordinary names retain
+exact, prefix, and trigram tiers before geographic signals. A recognized category alias instead
+uses its exact mapped category/subcategory as the candidate set, so a fitness centre need not contain
+`gym` in its name. Viewport and distance order equivalent taxonomy candidates. Meaningful brand
+punctuation is retained for intent classification, so `Gym+` remains a name search even though its
+stored normalized name is `gym`. Prefix, trigram GIN, subcategory, category, and spatial indexes keep
+the query bounded at a maximum of 25 compact results.
 
 The PWA debounces search by 250 ms and aborts stale requests. The accessible combobox/listbox works
-with keyboard or touch. Selecting a result eases MapLibre to zoom 16, applies the existing selected
-place layer, loads `/api/v1/places/{id}`, and opens the existing details UI. Search remains entirely
-inside the same-origin local chain: browser → Caddy → FastAPI → PostgreSQL.
+with keyboard or touch. Meaningful results populate an unclustered `app-search-results` GeoJSON
+source while all normal `app-places` layers are hidden. Search point and selected-result layers make
+the bounded ranked set explicit without implying a total category count. Clear or dismiss empties
+the search source and restores normal viewport clustering. Selecting a result eases MapLibre to zoom
+16, highlights it in the search source, loads `/api/v1/places/{id}`, and opens the existing details
+UI. Search remains entirely inside the same-origin local chain: browser → Caddy → FastAPI → PostgreSQL.
 
 ## Configuration and persistence
 

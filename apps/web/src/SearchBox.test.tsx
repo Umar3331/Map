@@ -19,20 +19,25 @@ const rimi = { ...maxima, id: 1081, name: 'Rimi', distance_m: 480 }
 function response(results = [maxima]) {
   return Promise.resolve({
     ok: true,
-    json: async () => ({ query: 'maxima', results, meta: { returned: results.length } }),
+    json: async () => ({
+      query: 'maxima',
+      results,
+      meta: { returned: results.length, intent: 'name' },
+    }),
   })
 }
 
-function renderSearch(onSelect = vi.fn(), onClear = vi.fn()) {
+function renderSearch(onSelect = vi.fn(), onClear = vi.fn(), onResultsChange = vi.fn()) {
   render(
     <SearchBox
       regionName="Vilnius"
       context={null}
       onSelect={onSelect}
       onClear={onClear}
+      onResultsChange={onResultsChange}
     />,
   )
-  return { input: screen.getByRole('combobox'), onSelect, onClear }
+  return { input: screen.getByRole('combobox'), onSelect, onClear, onResultsChange }
 }
 
 async function finishDebounce() {
@@ -86,6 +91,28 @@ it('aborts a stale request before a newer query can replace it', async () => {
   expect(staleSignal?.aborted).toBe(true)
   await finishDebounce()
   expect(screen.getByRole('option', { name: /Rimi/ })).toBeInTheDocument()
+})
+
+it('publishes only current results to map search mode and clears stale map results', async () => {
+  let resolveStale: ((value: Awaited<ReturnType<typeof response>>) => void) | undefined
+  const staleResponse = new Promise<Awaited<ReturnType<typeof response>>>((resolve) => {
+    resolveStale = resolve
+  })
+  const fetchMock = vi.fn()
+    .mockImplementationOnce(() => staleResponse)
+    .mockImplementationOnce(() => response([rimi]))
+  vi.stubGlobal('fetch', fetchMock)
+  const { input, onResultsChange } = renderSearch()
+
+  fireEvent.focus(input)
+  fireEvent.change(input, { target: { value: 'maxima' } })
+  await finishDebounce()
+  fireEvent.change(input, { target: { value: 'rimi' } })
+  expect(onResultsChange).toHaveBeenLastCalledWith([])
+  await finishDebounce()
+  expect(onResultsChange).toHaveBeenLastCalledWith([rimi])
+  await act(async () => resolveStale?.(await response([maxima])))
+  expect(onResultsChange).toHaveBeenLastCalledWith([rimi])
 })
 
 it('renders loading, empty, error, and clear states without breaking the search control', async () => {
