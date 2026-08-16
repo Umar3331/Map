@@ -105,5 +105,18 @@ the normal Windows workflow stays PowerShell plus Docker. Cartography is intenti
 the extract is rectangular rather than an exact municipal polygon, data updates are manual with
 `map-data.ps1 -Update`, and OSM attribution/ODbL obligations remain. Client tile templates are
 absolute URLs derived from the current browser origin; direct Martin URLs and fixed host/port values
-are prohibited. Zoom-dependent filtering or generalization is required before Milestone 1.1 merge
-because current transportation tiles are approximately 1.32 MiB at z11 and 652 KiB at z12.
+are prohibited. Transportation tiles require deliberate zoom-dependent filtering and generalization
+rather than serving the raw road table at every zoom.
+
+## ADR-020 — Explicit MapLibre worker bundling and zoom-aware road tiles
+**Status:** Accepted. **Context:** MapLibre GL JS 6 resolved its default worker to a file that Vite had
+not emitted. Caddy's SPA fallback returned `index.html` with HTTP 200 at that JavaScript URL, causing
+a worker MIME/module failure and a blank map. Raw transportation tiles also measured about 1.32 MiB
+at z11 and 652 KiB at z12. **Decision:** Import the MapLibre worker with Vite's `?worker&url` loader,
+set its URL before constructing the map, serve `/assets/*` without SPA fallback, and precache the
+hashed worker. Publish transportation through a PostGIS tile function that selects zoom-appropriate
+road classes and simplification while preserving the existing public URL and layer name.
+**Consequences:** Missing assets now return 404, the production worker is a real same-origin
+JavaScript bundle, updates activate through Workbox, and representative road tiles are tens of KiB
+rather than hundreds of KiB or MiB. The lightweight road policy is explicit and can evolve with
+cartographic testing.

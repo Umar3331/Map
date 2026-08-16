@@ -1,11 +1,12 @@
 import { render } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
 
-const { mapConstructor, addControl, remove, on, eventHandlers } = vi.hoisted(() => ({
+const { mapConstructor, addControl, remove, on, setWorkerUrl, eventHandlers } = vi.hoisted(() => ({
   mapConstructor: vi.fn(),
   addControl: vi.fn(),
   remove: vi.fn(),
   on: vi.fn(),
+  setWorkerUrl: vi.fn(),
   eventHandlers: new Map<string, (event: { error?: Error; sourceId?: string; sourceDataType?: string }) => void>(),
 }))
 
@@ -23,6 +24,7 @@ vi.mock('maplibre-gl', () => ({
   NavigationControl: class {},
   GeolocateControl: class {},
   AttributionControl: class {},
+  setWorkerUrl,
 }))
 
 import { MapView } from './MapView'
@@ -54,6 +56,8 @@ it('initializes and cleans up MapLibre with the Vilnius center', () => {
       ],
     }),
   )
+  expect(setWorkerUrl).toHaveBeenCalledOnce()
+  expect(setWorkerUrl).toHaveBeenCalledWith(expect.stringContaining('maplibre-gl-worker'))
   const mapOptions = mapConstructor.mock.calls[0][0]
   const transportation = mapOptions.style.sources.transportation
   expect(transportation.tiles).toEqual([

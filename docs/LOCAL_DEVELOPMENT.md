@@ -35,6 +35,8 @@ npm.cmd run lint
 npm.cmd run typecheck
 npm.cmd test
 npm.cmd run build
+npm.cmd run test:build
+npm.cmd run test:e2e
 cd ..\..
 docker compose config --quiet
 .\scripts\validate-rsa-pki.ps1
@@ -66,11 +68,18 @@ roads, buildings, water/green areas, labels, pan/zoom, `/health`, and `/tiles/*`
 Browser developer tools must show no public tile, glyph, sprite, Mapbox, or CDN request. A physical
 iPhone must remain on the same LAN; only the user can complete that final device/offline check.
 
-The production PWA uses Workbox automatic updates. After rebuilding the web image, an already-open
-tab or installed iPhone PWA can briefly run the previous cached application shell while the new
+The production PWA uses Workbox automatic updates. Its hashed MapLibre worker is emitted by Vite,
+validated after every production build, and included in the precache. Caddy never applies the SPA
+fallback under `/assets/*`; missing worker or bundle URLs return 404. The Playwright production smoke
+test checks all eight vector sources, pan/zoom, geolocation, the worker MIME type, and same-origin-only
+runtime requests against a running stack.
+
+After rebuilding the web image, an already-open tab or installed iPhone PWA can briefly run the
+previous cached application shell while the new
 service worker activates. For a one-time verification, reload the browser twice; on iPhone, fully
 close and reopen the installed PWA. Do not remove the service worker or disable caching.
 
-Before Milestone 1.1 is merged, add zoom-dependent filtering/generalization for oversized vector
-tiles. The current transportation source is approximately 1.32 MiB at z11 and 652 KiB at z12. This
-does not block the URL-resolution rendering fix, but it is too large for polished mobile performance.
+Transportation uses a zoom-aware PostGIS tile function. On the Windows reference dataset it reduced
+representative road tiles from 1,321,811 to 43,611 bytes at z11 and from 651,187 to 29,446 bytes at
+z12. z13 and z14 examples measured 27,923 and 44,906 bytes. Run `map-data.ps1` after changing the SQL
+function so Martin discovers the current definition.

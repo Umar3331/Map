@@ -5,7 +5,10 @@ postgres:
     from_schemas:
       - public
       - osm
-    functions: false
+    functions:
+      from_schemas:
+        - osm
+      source_id_format: "{function}"
     tables:
       from_schemas:
         - public

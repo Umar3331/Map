@@ -44,9 +44,15 @@ hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 20
 - [x] Connected Windows full-stack health and local tile requests pass.
 - [x] Production browser runtime reports content events for all eight same-origin vector sources
   using absolute URLs derived from the current browser origin.
+- [x] Production MapLibre worker is emitted as hashed JavaScript, precached, served with a JavaScript
+  MIME type, and missing `/assets/*` files return 404 instead of the SPA shell.
+- [x] Windows Edge visibly renders Vilnius roads, buildings, water, green areas, and labels; its
+  fresh console has no worker, module, MIME, or MapLibre error.
+- [x] Playwright exercises pan/zoom and geolocation, receives 200 tiles for all eight sources, and
+  proves all runtime HTTP requests stay on the Map origin.
+- [x] Zoom-aware transportation tiles replace the oversized raw-table route; measured examples are
+  43,611 bytes at z11 and 29,446 bytes at z12.
 - [ ] With laptop Internet disconnected but LAN active, visually verify five representative Vilnius
   areas, labels, pan/zoom, API, and tiles in a desktop browser.
 - [ ] User verifies the self-hosted map on the physical iPhone with Internet unavailable but local
   Wi-Fi/LAN active. Do not mark this passed based on desktop or automated testing.
-- [ ] Add zoom-dependent tile filtering/generalization; transportation tiles are currently about
-  1.32 MiB at z11 and 652 KiB at z12.

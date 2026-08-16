@@ -47,6 +47,13 @@ jobs:
           curl --fail http://localhost:5173/health
           curl --fail http://localhost:5173/api/v1/config
           curl --fail http://localhost:5173/tiles/vilnius_boundary/0/0/0 --output /dev/null
+      - name: Verify production worker and static asset fallback
+        run: |
+          app_bundle=$(curl --fail --silent http://localhost:5173/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js' | head -1)
+          worker=$(curl --fail --silent "http://localhost:5173/${app_bundle}" | grep -o 'assets/maplibre-gl-worker-[A-Za-z0-9_-]*\.js' | head -1)
+          test -n "${worker}"
+          curl --fail --silent --show-error --head "http://localhost:5173/${worker}" | grep -i '^Content-Type:.*javascript'
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:5173/assets/missing-worker.js)" = "404"
       - if: always()
         run: docker compose logs rsa-pki web api tiles db
       - if: always()

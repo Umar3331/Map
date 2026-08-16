@@ -33,6 +33,14 @@ not require a font CDN. No sprite is used. The only external basemap dependency 
 explicit-update Geofabrik download; runtime basemap dependencies are local. OSM attribution is
 mandatory.
 
+MapLibre GL JS 6's worker is bundled explicitly through Vite's `?worker&url` loader and configured
+before map construction. The emitted hashed JavaScript worker is part of the Workbox precache.
+Caddy serves `/assets/*` strictly, so a missing worker returns 404 instead of the SPA HTML shell.
+
+Transportation tiles use the `osm.transportation_tiles(z, x, y)` PostGIS function. It retains only
+class and name, simplifies geometry at lower zooms, and progressively adds minor roads through z14.
+The public URL remains `/tiles/transportation/{z}/{x}/{y}` while Caddy maps it to the Martin function.
+
 ## PWA and HTTPS
 
 Vite PWA tooling generates the manifest and Workbox service worker. Browsers treat `localhost` as a

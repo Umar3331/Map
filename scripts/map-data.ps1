@@ -79,6 +79,10 @@ docker compose run --rm osm-import `
 if ($LASTEXITCODE -ne 0) { throw 'osm2pgsql import failed.' }
 $Timer.Stop()
 
+docker compose exec -T db psql -v ON_ERROR_STOP=1 -U $DbUser -d $DbName `
+    -f /docker-entrypoint-initdb.d/002_transportation_tiles.sql
+if ($LASTEXITCODE -ne 0) { throw 'Could not install zoom-aware transportation tiles.' }
+
 $ValidationSql = @'
 SELECT table_name || '=' || row_count
 FROM (
@@ -106,7 +110,7 @@ $TileReady = $false
 for ($Attempt = 0; $Attempt -lt 30; $Attempt++) {
     try {
         $TileResponse = Invoke-WebRequest `
-            'http://localhost:3000/transportation/12/2335/1301' -UseBasicParsing -TimeoutSec 5
+            'http://localhost:3000/transportation_tiles/12/2335/1301' -UseBasicParsing -TimeoutSec 5
         if ($TileResponse.StatusCode -eq 200 -and $TileResponse.RawContentLength -gt 0) {
             $TileReady = $true
             break

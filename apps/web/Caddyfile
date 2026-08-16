@@ -31,6 +31,11 @@
 		reverse_proxy api:8000
 	}
 
+	handle_path /tiles/transportation/* {
+		rewrite * /transportation_tiles{path}
+		reverse_proxy tiles:3000
+	}
+
 	handle_path /tiles/* {
 		reverse_proxy tiles:3000
 	}
@@ -46,6 +51,11 @@
 
 	handle /local-ca.mobileconfig {
 		reverse_proxy api:8000
+	}
+
+	handle /assets/* {
+		root * /srv
+		file_server
 	}
 
 	handle {

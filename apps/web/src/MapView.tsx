@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
 import type { MapConfig } from './config'
 import { createVilniusStyle } from './mapStyle'
@@ -16,6 +17,7 @@ export function MapView({ config }: MapViewProps) {
   useEffect(() => {
     if (!containerRef.current) return
 
+    maplibregl.setWorkerUrl(maplibreWorkerUrl)
     const mapContainer = containerRef.current
     const loadedSources = new Set<string>()
     const map = new maplibregl.Map({
