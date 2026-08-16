@@ -67,6 +67,29 @@ Stable profile and payload UUIDs derive from the public certificate fingerprints
 can read or expose a CA private key. Caddy's managed RSA leaf state remains under `/data` in the
 persistent `caddy-data` volume, and no PKI state is bind-mounted into the repository.
 
+## Application places
+
+Basemap imports and product entities are separate boundaries. `osm.*` and `app_import.*` are
+replaceable source/import structures; application behavior reads persistent `app.*` tables.
+`app.places` uses a stable internal identity, an OSM source/external-ID uniqueness constraint, a
+PostGIS point, normalized category fields, optional consumer details, lifecycle status, and import
+timestamps. `app.place_sources` records attribution, licence, and source URLs, while
+`app.place_import_runs` records validation metrics.
+
+The Windows-first flow is `Vilnius PBF → places.lua → app_import staging → validated SQL upsert →
+app.places`. Missing names, invalid/out-of-bounds geometry, non-Lithuanian records, and duplicate
+source IDs are measured before application records become active. A complete refresh marks vanished
+OSM records inactive instead of reassigning their internal IDs.
+
+FastAPI exposes bounded read-only queries through `/api/v1/places` and full records through
+`/api/v1/places/{id}`. The list query uses the `places_geom_idx` GiST index and returns compact
+GeoJSON capped at 500 features plus returned/total/truncated metadata. A same-filter count query
+makes the bounded response explicit. A small database connection pool avoids reconnecting during
+map pans. The PWA debounces `moveend`, aborts stale requests, and updates one MapLibre GeoJSON source.
+Native cluster, cluster-count, category circle, and selected-place layers remain above the basemap.
+Clustering runs only for complete responses; truncated broad views clear partial features and show
+zoom guidance. React renders only the details panel, never thousands of DOM markers.
+
 ## Configuration and persistence
 
 `.env` owns ports and `MAP_HOST`; it is never committed. `setup.ps1` detects an active LAN address

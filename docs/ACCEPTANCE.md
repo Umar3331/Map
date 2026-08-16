@@ -59,3 +59,30 @@ hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 20
   parks/green areas, and labels, and pan/zoom work.
 
 Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
+
+## Milestone 2 acceptance
+
+- [x] A repeatable, Windows-first OSM importer populates application-owned `app.places` data.
+- [x] Two consecutive imports preserve active place count and stable source identities.
+- [x] Spatial, category, and normalized-name indexes exist and imported geometries remain inside the
+  buffered Vilnius/Lithuania scope.
+- [x] Bounded GeoJSON list and place-detail APIs expose provenance without exposing the raw OSM
+  schema as the application contract.
+- [x] MapLibre renders application places with native clustering and category-aware markers.
+- [x] Selecting a marker loads a dismissible desktop card or mobile bottom sheet; absent optional
+  fields are omitted cleanly.
+- [x] Moving the map reloads only the visible viewport and a failed place request does not break the
+  self-hosted basemap.
+- [x] Bounded responses report total/returned/truncated metadata; broad truncated views suppress
+  incomplete clusters and show unobtrusive zoom guidance.
+- [x] Frontend unit tests, backend tests, Compose validation, live importer validation, and the
+  production Playwright browser suite pass.
+- [x] Playwright verifies real marker selection, detail rendering, dismissal, viewport reload, and a
+  390-by-844 responsive layout with no horizontal overflow.
+- [x] On 2026-08-17, the user confirmed on a physical iPhone that broad viewports show truncation
+  guidance, zoomed-in complete clusters and markers render, markers are selectable, and selecting a
+  different place updates the mobile bottom sheet with the correct details.
+- [x] On the physical iPhone, the details sheet dismisses correctly, panning reloads places, the
+  layout has no horizontal overflow, and the existing HTTPS/PWA behavior remains correct.
+
+Milestone 2 physical-iPhone acceptance passed on 2026-08-17.

@@ -117,11 +117,95 @@ button, input { font: inherit; }
 .maplibregl-ctrl-group { overflow: hidden; border: 1px solid rgb(255 255 255 / 70%); border-radius: 13px; box-shadow: 0 8px 24px rgb(16 36 30 / 16%); }
 .maplibregl-ctrl-attrib { margin-left: 4px !important; border-radius: 8px 8px 0 0; font-size: 10px; }
 
+.places-status {
+  position: absolute;
+  z-index: 2;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom) + 122px);
+  padding: 8px 11px;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-radius: 999px;
+  color: #31564a;
+  background: rgb(250 253 251 / 92%);
+  box-shadow: 0 6px 20px rgb(16 36 30 / 14%);
+  font-size: 12px;
+  font-weight: 650;
+  pointer-events: none;
+}
+.places-status-error { color: #873e34; }
+.places-status-guidance { color: #285f50; }
+
+.place-details {
+  position: absolute;
+  z-index: 4;
+  right: 18px;
+  bottom: 18px;
+  width: min(360px, calc(100vw - 36px));
+  max-height: min(560px, calc(100vh - 100px));
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgb(255 255 255 / 76%);
+  border-radius: 22px;
+  color: #17352d;
+  background: rgb(252 253 250 / 97%);
+  box-shadow: 0 20px 60px rgb(16 36 30 / 28%);
+  backdrop-filter: blur(18px);
+}
+.place-details-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #31564a;
+  background: #e7efeb;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+.place-details h1 { max-width: calc(100% - 34px); margin: 10px 0 2px; font-size: 24px; line-height: 1.12; }
+.place-category { display: inline-flex; padding: 5px 9px; border-radius: 999px; color: white; background: #596b5f; font-size: 11px; font-weight: 750; letter-spacing: .03em; }
+.place-category-food_drink { background: #d96c4c; }
+.place-category-shopping { background: #7658b5; }
+.place-category-health { background: #d84f72; }
+.place-category-automotive { background: #4a6c88; }
+.place-category-beauty { background: #b55494; }
+.place-category-fitness { background: #31866f; }
+.place-category-finance { background: #3975a8; }
+.place-category-accommodation { background: #9b6547; }
+.place-category-services { background: #596b5f; }
+.place-category-other { background: #6f7477; }
+.place-subcategory { margin: 0; color: #668077; font-size: 14px; }
+.place-description { margin: 16px 0 0; color: #36564d; line-height: 1.45; }
+.place-details dl { display: grid; grid-template-columns: 76px 1fr; gap: 10px 12px; margin: 20px 0 0; font-size: 14px; }
+.place-details dt { color: #71877f; font-weight: 650; }
+.place-details dd { margin: 0; color: #25473d; overflow-wrap: anywhere; }
+.place-details a { color: #176d59; font-weight: 650; }
+.place-attribution { margin: 20px 0 0; color: #7b8b86; font-size: 11px; }
+
 @keyframes pulse { 50% { opacity: .35; transform: scale(.78); } }
 
 @media (min-width: 700px) {
   .top-bar { justify-content: center; padding-top: 18px; }
   .brand { position: absolute; left: 18px; }
+}
+
+@media (max-width: 699px) {
+  .place-details {
+    right: 8px;
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    left: 8px;
+    width: auto;
+    max-height: min(58vh, 520px);
+    padding: 20px;
+    border-radius: 22px 22px 16px 16px;
+  }
+  .places-status { right: 10px; bottom: calc(env(safe-area-inset-bottom) + 118px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -10,8 +10,11 @@ No milestone has an arbitrary date.
    runtime public basemap or font/sprite CDN. The production worker, strict static-asset routing,
    browser smoke test, and zoom-aware transportation tiles are implemented. Physical-iPhone offline
    acceptance passed on 2026-08-16. See `docs/ACCEPTANCE.md`.
-3. **Milestone 2 — Custom places and local business data.** Define provenance, ingestion, and a
-   minimal place model.
+3. **Milestone 2 — Custom places and local business data (complete).** Application-owned places,
+   OSM provenance, a curated taxonomy, idempotent Windows import, bounded spatial API with explicit
+   truncation metadata, non-misleading broad-viewport guidance, native category markers, viewport
+   loading, and responsive place details are implemented. Physical-iPhone place interaction and
+   layout acceptance passed on 2026-08-17. See `docs/ACCEPTANCE.md`.
 4. **Milestone 3 — Search/discovery.** Geographic and textual discovery over trusted place data.
 5. **Milestone 4 — Service-provider profiles.** Model providers and offered services.
 6. **Milestone 5 — Availability/booking foundation.** Evaluate availability semantics and actions.

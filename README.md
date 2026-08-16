@@ -48,6 +48,7 @@ cd Map
 Copy-Item .env.example .env
 .\scripts\setup.ps1
 .\scripts\map-data.ps1
+.\scripts\places-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 ```
@@ -66,6 +67,16 @@ PBF download is an update-time dependency only. At runtime, MapLibre requests ro
 water, landuse, rail, boundaries, waterways, and place labels from Martin through same-origin
 `/tiles/*` routes. No public basemap, glyph, sprite, or CDN request is required. All PBFs and generated
 data remain local and ignored by Git; OpenStreetMap attribution remains visible.
+
+## Vilnius places
+
+Milestone 2 introduces Map-owned `app.places` entities seeded from a curated subset of named OSM
+points of interest. Run `scripts/places-data.ps1` after `map-data.ps1`; repeated runs upsert by stable
+OSM source ID and do not duplicate records. The PWA requests only the current viewport from
+`/api/v1/places`, renders category-aware clustered MapLibre layers, and opens a responsive details
+card when a place is selected. Viewport responses report returned and total counts. When a broad
+view exceeds the limit, Map hides the incomplete client-side clusters and asks the user to zoom in.
+See [place data and provenance](docs/PLACES_DATA.md).
 
 ## Repository
 
