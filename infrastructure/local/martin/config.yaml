@@ -1,0 +1,21 @@
+postgres:
+  connection_string: ${DATABASE_URL}
+  auto_bounds: quick
+  auto_publish:
+    from_schemas:
+      - public
+      - osm
+    functions:
+      from_schemas:
+        - osm
+      source_id_format: "{function}"
+    tables:
+      from_schemas:
+        - public
+        - osm
+      id_columns:
+        - id
+        - way_id
+        - area_id
+        - node_id
+      source_id_format: "{table}"

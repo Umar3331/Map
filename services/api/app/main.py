@@ -1,7 +1,4 @@
-import os
-from urllib.parse import urlsplit
-
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Response
 
 from app import mobileconfig
 
@@ -52,42 +49,50 @@ def local_ca_mobileconfig() -> Response:
 
 
 @app.get("/api/v1/map/style.json")
-def map_style(request: Request) -> dict:
-    """Return a minimal local style whose tile host follows the API request host."""
-    hostname = urlsplit(str(request.base_url)).hostname or "localhost"
-    tile_port = os.getenv("TILE_PUBLIC_PORT", "3000")
-    tiles = f"http://{hostname}:{tile_port}/vilnius_boundary/{{z}}/{{x}}/{{y}}"
+def map_style() -> dict:
+    """Return a same-origin local style with no public basemap dependency."""
     center = VILNIUS["center"]
     region_name = str(VILNIUS["region"]).title()
+    source_names = (
+        "landuse",
+        "water",
+        "buildings",
+        "waterways",
+        "boundaries",
+        "railways",
+        "transportation",
+        "places",
+    )
     return {
         "version": 8,
         "name": f"Map Local {region_name}",
         "center": [center["longitude"], center["latitude"]],
         "zoom": 10,
         "sources": {
-            "vilnius": {
+            name: {
                 "type": "vector",
-                "tiles": [tiles],
+                "tiles": [f"/tiles/{name}/{{z}}/{{x}}/{{y}}"],
                 "minzoom": 0,
-                "maxzoom": 14,
+                "maxzoom": 19,
                 "attribution": "© OpenStreetMap contributors",
             }
+            for name in source_names
         },
         "layers": [
             {"id": "background", "type": "background", "paint": {"background-color": "#eef3f1"}},
             {
-                "id": "vilnius-area",
+                "id": "landuse",
                 "type": "fill",
-                "source": "vilnius",
-                "source-layer": "vilnius_boundary",
-                "paint": {"fill-color": "#4f8f7b", "fill-opacity": 0.18},
+                "source": "landuse",
+                "source-layer": "landuse",
+                "paint": {"fill-color": "#cde5bf", "fill-opacity": 0.7},
             },
             {
-                "id": "vilnius-outline",
+                "id": "roads",
                 "type": "line",
-                "source": "vilnius",
-                "source-layer": "vilnius_boundary",
-                "paint": {"line-color": "#2d6658", "line-width": 2},
+                "source": "transportation",
+                "source-layer": "transportation",
+                "paint": {"line-color": "#ffffff", "line-width": 2},
             },
         ],
     }

@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
 import type { MapConfig } from './config'
-import { vilniusStyle } from './mapStyle'
+import { createVilniusStyle } from './mapStyle'
 
 type MapViewProps = {
   config: MapConfig
@@ -16,9 +17,12 @@ export function MapView({ config }: MapViewProps) {
   useEffect(() => {
     if (!containerRef.current) return
 
+    maplibregl.setWorkerUrl(maplibreWorkerUrl)
+    const mapContainer = containerRef.current
+    const loadedSources = new Set<string>()
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: vilniusStyle,
+      style: createVilniusStyle(window.location.origin),
       center: [config.center.longitude, config.center.latitude],
       zoom: 11.4,
       minZoom: 8,
@@ -43,6 +47,18 @@ export function MapView({ config }: MapViewProps) {
       new maplibregl.AttributionControl({ compact: true, customAttribution: 'Map v0.1' }),
       'bottom-left',
     )
+
+    map.on('error', (event) => {
+      console.error('MapLibre runtime error', event.error)
+    })
+    map.on('sourcedata', (event) => {
+      if (!event.sourceId || event.sourceDataType !== 'content') return
+      loadedSources.add(event.sourceId)
+      mapContainer.dataset.loadedSources = [...loadedSources].sort().join(',')
+      if (import.meta.env.DEV) {
+        console.debug('MapLibre source data', event.sourceId, event.sourceDataType)
+      }
+    })
 
     return () => map.remove()
   }, [config])

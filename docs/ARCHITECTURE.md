@@ -16,11 +16,30 @@ Windows loopback. Only Caddy's HTTP 5173 and HTTPS 8443 ports bind to the LAN.
 
 ## Map data
 
-The target is `OSM Lithuania extract → Vilnius filter → PostGIS → Martin → MapLibre GL JS`. The
-reproducible filter is `scripts/map-data.ps1`; PBFs, caches, and generated tiles are ignored. The
-current local vector proof serves the seeded Vilnius boundary. Detailed basemap tiles come from the
-public OSM raster endpoint as a **TEMPORARY DEVELOPMENT DEPENDENCY** until curated OSM import and
-styling are implemented. Attribution is mandatory.
+The implemented flow is `Geofabrik Lithuania PBF → Osmium buffered Vilnius extract → osm2pgsql flex
+output → osm schema → Martin → MapLibre GL JS`. `scripts/map-data.ps1` orchestrates the Windows
+workflow entirely through PowerShell and Docker. Downloaded PBFs and generated data are ignored.
+
+The `osm` schema separates imported geographic data from application tables. It contains
+`transportation`, `buildings`, `water`, `waterways`, `landuse`, `railways`, `boundaries`, and
+`places`. Martin publishes those tables as same-named vector sources while retaining the seeded
+`public.vilnius_boundary` source. Browser access remains only through Caddy's `/tiles/*` route.
+
+The MapLibre style factory constructs absolute tile templates from `window.location.origin`. This
+preserves the same origin for both `http://localhost:5173` and `https://LAN_IP:8443` without leaking
+Martin's loopback-only port or creating mixed content. It intentionally omits a `glyphs` URL:
+MapLibre GL JS 6 uses locally available browser fonts in that mode, so street and place labels do
+not require a font CDN. No sprite is used. The only external basemap dependency is the one-time or
+explicit-update Geofabrik download; runtime basemap dependencies are local. OSM attribution is
+mandatory.
+
+MapLibre GL JS 6's worker is bundled explicitly through Vite's `?worker&url` loader and configured
+before map construction. The emitted hashed JavaScript worker is part of the Workbox precache.
+Caddy serves `/assets/*` strictly, so a missing worker returns 404 instead of the SPA HTML shell.
+
+Transportation tiles use the `osm.transportation_tiles(z, x, y)` PostGIS function. It retains only
+class and name, simplifies geometry at lower zooms, and progressively adds minor roads through z14.
+The public URL remains `/tiles/transportation/{z}/{x}/{y}` while Caddy maps it to the Martin function.
 
 ## PWA and HTTPS
 
