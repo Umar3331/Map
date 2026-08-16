@@ -14,11 +14,22 @@ vi.mock('maplibre-gl', () => ({
   Map: class {
     constructor(options: unknown) { mapConstructor(options) }
     addControl = addControl
-    on(eventName: string, handler: (event: { error?: Error; sourceId?: string; sourceDataType?: string }) => void) {
-      on(eventName, handler)
-      eventHandlers.set(eventName, handler)
+    addSource = vi.fn()
+    addLayer = vi.fn()
+    getSource = vi.fn()
+    getBounds = vi.fn(() => ({ getWest: () => 25.1, getSouth: () => 54.55, getEast: () => 25.5, getNorth: () => 54.85 }))
+    getCanvas = vi.fn(() => document.createElement('canvas'))
+    project = vi.fn(() => ({ x: 100, y: 100 }))
+    easeTo = vi.fn()
+    setFilter = vi.fn()
+    on(eventName: string, layerOrHandler: unknown, possibleHandler?: unknown) {
+      const handler = (typeof layerOrHandler === 'function' ? layerOrHandler : possibleHandler) as
+        (event: { error?: Error; sourceId?: string; sourceDataType?: string }) => void
+      on(eventName, layerOrHandler, possibleHandler)
+      if (typeof layerOrHandler === 'function') eventHandlers.set(eventName, handler)
       return this
     }
+    once = vi.fn()
     remove = remove
   },
   NavigationControl: class {},
@@ -64,8 +75,8 @@ it('initializes and cleans up MapLibre with the Vilnius center', () => {
     `${window.location.origin}/tiles/transportation/{z}/{x}/{y}`,
   ])
   expect(addControl).toHaveBeenCalledTimes(3)
-  expect(on).toHaveBeenCalledWith('error', expect.any(Function))
-  expect(on).toHaveBeenCalledWith('sourcedata', expect.any(Function))
+  expect(on).toHaveBeenCalledWith('error', expect.any(Function), undefined)
+  expect(on).toHaveBeenCalledWith('sourcedata', expect.any(Function), undefined)
 
   eventHandlers.get('sourcedata')?.({ sourceId: 'transportation', sourceDataType: 'content' })
   expect(document.querySelector('.map-canvas')).toHaveAttribute('data-loaded-sources', 'transportation')

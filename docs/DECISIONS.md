@@ -120,3 +120,15 @@ road classes and simplification while preserving the existing public URL and lay
 JavaScript bundle, updates activate through Workbox, and representative road tiles are tens of KiB
 rather than hundreds of KiB or MiB. The lightweight road policy is explicit and can evolve with
 cartographic testing.
+
+## ADR-021 — Application-owned places are separate from OSM import tables
+**Status:** Accepted. **Context:** The replaceable `osm.*` tables are optimized for basemap rendering
+and cannot provide durable application identity, provenance, lifecycle, or future provider links.
+**Decision:** Persist product places in `app.places`, normalize a small Map taxonomy, and retain a
+required source plus source-specific external ID. Use disposable `app_import.*` tables to transform
+the local OSM snapshot, then validate and upsert into `app.*`. Serve product places through bounded
+FastAPI GeoJSON, not Martin basemap tiles, and render them as MapLibre-native clustered layers.
+**Consequences:** Basemap refreshes cannot silently redefine application identity; repeated OSM
+imports remain idempotent; attribution and licensing remain traceable; future sources can be added
+without discarding OSM IDs. Cross-source fuzzy deduplication, provider claims, search, rankings, and
+editing workflows remain deferred.

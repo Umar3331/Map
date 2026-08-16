@@ -5,6 +5,7 @@ The normal full stack runs in Docker:
 ```powershell
 .\scripts\setup.ps1
 .\scripts\map-data.ps1
+.\scripts\places-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 docker compose ps
@@ -83,3 +84,28 @@ Transportation uses a zoom-aware PostGIS tile function. On the Windows reference
 representative road tiles from 1,321,811 to 43,611 bytes at z11 and from 651,187 to 29,446 bytes at
 z12. z13 and z14 examples measured 27,923 and 44,906 bytes. Run `map-data.ps1` after changing the SQL
 function so Martin discovers the current definition.
+
+## Application place data
+
+Run the application-owned place import after `map-data.ps1` and whenever the PostGIS volume is new:
+
+```powershell
+.\scripts\places-data.ps1
+```
+
+The command reuses the validated, buffered Vilnius PBF, imports disposable candidates with
+osm2pgsql flex, and upserts them into stable `app.places` identities. It is safe to rerun: unchanged
+source objects retain their place IDs, and objects absent from the new snapshot become inactive
+instead of disappearing. Use `-Update` to refresh the Lithuania download and Vilnius extract first.
+Import history and skip counts are recorded in `app.place_import_runs`.
+
+Validate the latest two imports with:
+
+```powershell
+.\scripts\validate-places.ps1
+```
+
+The map requests only the visible bounding box. The list endpoint is
+`GET /api/v1/places?west=...&south=...&east=...&north=...&category=...&limit=...`; category is
+optional and limit is capped at 500. `GET /api/v1/places/{id}` returns optional details and source
+provenance. See `docs/PLACES_DATA.md` for taxonomy, attribution, and licensing details.
