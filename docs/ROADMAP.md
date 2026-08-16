@@ -15,11 +15,11 @@ No milestone has an arbitrary date.
    truncation metadata, non-misleading broad-viewport guidance, native category markers, viewport
    loading, and responsive place details are implemented. Physical-iPhone place interaction and
    layout acceptance passed on 2026-08-17. See `docs/ACCEPTANCE.md`.
-4. **Milestone 3 — Search/discovery (draft PR).** PostgreSQL-backed exact, prefix, partial, typo, and
+4. **Milestone 3 — Search/discovery (complete).** PostgreSQL-backed exact, prefix, partial, typo, and
    category-alias discovery over trusted `app.places` is implemented with distinct name/category
    intent, taxonomy-complete category candidates, bounded search-result map layers, accessible
-   desktop/mobile results, map focus, and existing detail-panel reuse. Automated and Windows
-   production-browser acceptance pass; physical-iPhone search acceptance remains.
+   desktop/mobile results, map focus, and existing detail-panel reuse. Automated, Windows
+   production-browser, and physical-iPhone re-acceptance passed on 2026-08-17.
 5. **Milestone 4 — Service-provider profiles.** Model providers and offered services.
 6. **Milestone 5 — Availability/booking foundation.** Evaluate availability semantics and actions.
 7. **Milestone 6 — Routing/navigation evaluation.** Assess needs and open data/tooling.

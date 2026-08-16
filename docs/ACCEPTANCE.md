@@ -111,7 +111,14 @@ Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
   representative prefix/typo queries.
 - [x] Frontend/backend tests, production build, Compose/live validation, six Playwright production
   scenarios, and Windows Edge visual/console checks pass.
-- [ ] Physical-iPhone search, keyboard, result selection, details transition, and clear/back
-  acceptance remains for user validation.
+- [x] On 2026-08-17, physical-iPhone re-acceptance confirmed that `gym` discovers taxonomy-based
+  `fitness_centre` results, including relevant brands such as Lemon Gym, while `Gym+` remains a
+  name-oriented brand query.
+- [x] On the physical iPhone, active search hides unrelated normal POIs while keeping search-result
+  markers visible; selection focuses the map and opens the existing details bottom sheet.
+- [x] Clearing or dismissing search restores normal viewport POIs, mobile keyboard behavior remains
+  usable, and there is no horizontal overflow or broken layout.
+- [x] Existing physical-iPhone HTTPS and installed-PWA behavior remains correct after the search
+  ranking and MapLibre search-mode changes.
 
-Milestone 3 remains in a draft pull request and must not be merged before physical-iPhone acceptance.
+Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
