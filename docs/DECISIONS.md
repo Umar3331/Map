@@ -103,4 +103,7 @@ as vector sources and MapLibre owns the local style. Labels use MapLibre GL JS l
 no glyph URL or sprite is configured. **Consequences:** Runtime has no public basemap dependency and
 the normal Windows workflow stays PowerShell plus Docker. Cartography is intentionally lightweight,
 the extract is rectangular rather than an exact municipal polygon, data updates are manual with
-`map-data.ps1 -Update`, and OSM attribution/ODbL obligations remain.
+`map-data.ps1 -Update`, and OSM attribution/ODbL obligations remain. Client tile templates are
+absolute URLs derived from the current browser origin; direct Martin URLs and fixed host/port values
+are prohibited. Zoom-dependent filtering or generalization is required before Milestone 1.1 merge
+because current transportation tiles are approximately 1.32 MiB at z11 and 652 KiB at z12.

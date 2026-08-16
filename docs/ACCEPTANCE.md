@@ -42,7 +42,11 @@ hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 20
 - [x] MapLibre style has no public OSM raster, Mapbox, glyph-provider, sprite-provider, or CDN URL.
 - [x] Frontend/API automated guards reject runtime external basemap URLs.
 - [x] Connected Windows full-stack health and local tile requests pass.
+- [x] Production browser runtime reports content events for all eight same-origin vector sources
+  using absolute URLs derived from the current browser origin.
 - [ ] With laptop Internet disconnected but LAN active, visually verify five representative Vilnius
   areas, labels, pan/zoom, API, and tiles in a desktop browser.
 - [ ] User verifies the self-hosted map on the physical iPhone with Internet unavailable but local
   Wi-Fi/LAN active. Do not mark this passed based on desktop or automated testing.
+- [ ] Add zoom-dependent tile filtering/generalization; transportation tiles are currently about
+  1.32 MiB at z11 and 652 KiB at z12.

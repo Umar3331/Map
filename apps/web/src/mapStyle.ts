@@ -2,28 +2,31 @@ import type { SourceSpecification, StyleSpecification } from 'maplibre-gl'
 
 const attribution = '© OpenStreetMap contributors'
 
-function vectorSource(name: string, maxzoom = 19): SourceSpecification {
+function vectorSource(origin: string, name: string, maxzoom = 19): SourceSpecification {
   return {
     type: 'vector',
-    tiles: [`/tiles/${name}/{z}/{x}/{y}`],
+    tiles: [`${origin}/tiles/${name}/{z}/{x}/{y}`],
     minzoom: 0,
     maxzoom,
     attribution,
   }
 }
 
-export const vilniusStyle: StyleSpecification = {
+export function createVilniusStyle(origin: string): StyleSpecification {
+  const sameOrigin = new URL(origin).origin
+
+  return {
   version: 8,
   name: 'Map self-hosted Vilnius',
   sources: {
-    landuse: vectorSource('landuse'),
-    water: vectorSource('water'),
-    buildings: vectorSource('buildings'),
-    waterways: vectorSource('waterways'),
-    boundaries: vectorSource('boundaries'),
-    railways: vectorSource('railways'),
-    transportation: vectorSource('transportation'),
-    places: vectorSource('places'),
+    landuse: vectorSource(sameOrigin, 'landuse'),
+    water: vectorSource(sameOrigin, 'water'),
+    buildings: vectorSource(sameOrigin, 'buildings'),
+    waterways: vectorSource(sameOrigin, 'waterways'),
+    boundaries: vectorSource(sameOrigin, 'boundaries'),
+    railways: vectorSource(sameOrigin, 'railways'),
+    transportation: vectorSource(sameOrigin, 'transportation'),
+    places: vectorSource(sameOrigin, 'places'),
   },
   layers: [
     { id: 'background', type: 'background', paint: { 'background-color': '#f5f2ea' } },
@@ -109,4 +112,5 @@ export const vilniusStyle: StyleSpecification = {
       paint: { 'text-color': '#343b3c', 'text-halo-color': '#fffdf7', 'text-halo-width': 1.5 },
     },
   ],
+  }
 }

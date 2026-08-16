@@ -25,11 +25,13 @@ The `osm` schema separates imported geographic data from application tables. It 
 `places`. Martin publishes those tables as same-named vector sources while retaining the seeded
 `public.vilnius_boundary` source. Browser access remains only through Caddy's `/tiles/*` route.
 
-The MapLibre style contains only relative, same-origin vector tile URLs. It intentionally omits a
-`glyphs` URL: MapLibre GL JS 6 uses locally available browser fonts in that mode, so street and place
-labels do not require a font CDN. No sprite is used. The only external basemap dependency is the
-one-time or explicit-update Geofabrik download; runtime basemap dependencies are local. OSM
-attribution is mandatory.
+The MapLibre style factory constructs absolute tile templates from `window.location.origin`. This
+preserves the same origin for both `http://localhost:5173` and `https://LAN_IP:8443` without leaking
+Martin's loopback-only port or creating mixed content. It intentionally omits a `glyphs` URL:
+MapLibre GL JS 6 uses locally available browser fonts in that mode, so street and place labels do
+not require a font CDN. No sprite is used. The only external basemap dependency is the one-time or
+explicit-update Geofabrik download; runtime basemap dependencies are local. OSM attribution is
+mandatory.
 
 ## PWA and HTTPS
 

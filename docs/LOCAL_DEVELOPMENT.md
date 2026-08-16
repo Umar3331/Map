@@ -65,3 +65,12 @@ and check city centre, a residential district, a major interchange, a park, and 
 roads, buildings, water/green areas, labels, pan/zoom, `/health`, and `/tiles/*` continue working.
 Browser developer tools must show no public tile, glyph, sprite, Mapbox, or CDN request. A physical
 iPhone must remain on the same LAN; only the user can complete that final device/offline check.
+
+The production PWA uses Workbox automatic updates. After rebuilding the web image, an already-open
+tab or installed iPhone PWA can briefly run the previous cached application shell while the new
+service worker activates. For a one-time verification, reload the browser twice; on iPhone, fully
+close and reopen the installed PWA. Do not remove the service worker or disable caching.
+
+Before Milestone 1.1 is merged, add zoom-dependent filtering/generalization for oversized vector
+tiles. The current transportation source is approximately 1.32 MiB at z11 and 652 KiB at z12. This
+does not block the URL-resolution rendering fix, but it is too large for polished mobile performance.

@@ -7,8 +7,9 @@ No milestone has an arbitrary date.
    architecture passed acceptance on 2026-08-13. See `docs/ACCEPTANCE.md`.
 2. **Milestone 1.1 — Fully self-hosted Vilnius basemap (draft PR).** The local pipeline and style are
    implemented as `Geofabrik PBF → Osmium → osm2pgsql flex → PostGIS → Martin → MapLibre`, with no
-   runtime public basemap or font/sprite CDN. Automated and connected-laptop validation pass. Final
-   acceptance still requires the documented disconnected laptop/browser and physical-iPhone check.
+   runtime public basemap or font/sprite CDN. Automated runtime source-loading validation passes.
+   Final acceptance still requires the documented disconnected laptop/browser and physical-iPhone
+   visual check plus zoom-dependent filtering/generalization for oversized vector tiles.
 3. **Milestone 2 — Custom places and local business data.** Define provenance, ingestion, and a
    minimal place model.
 4. **Milestone 3 — Search/discovery.** Geographic and textual discovery over trusted place data.
