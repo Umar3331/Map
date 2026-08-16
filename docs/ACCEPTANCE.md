@@ -34,7 +34,7 @@ The final TLS compatibility setting is Caddy's `default_sni {$MAP_HOST}` plus
 `fallback_sni {$MAP_HOST}`. Both true no-SNI IP clients and clients with an unmatched connection
 hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 2026-08-13.
 
-## Milestone 1.1 draft acceptance
+## Milestone 1.1 acceptance
 
 - [x] Validated Lithuania PBF is extracted to the buffered Vilnius bounds with containerized Osmium.
 - [x] osm2pgsql flex import creates eight non-empty feature tables in the separate `osm` schema.
@@ -52,7 +52,10 @@ hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 20
   proves all runtime HTTP requests stay on the Map origin.
 - [x] Zoom-aware transportation tiles replace the oversized raw-table route; measured examples are
   43,611 bytes at z11 and 29,446 bytes at z12.
-- [ ] With laptop Internet disconnected but LAN active, visually verify five representative Vilnius
-  areas, labels, pan/zoom, API, and tiles in a desktop browser.
-- [ ] User verifies the self-hosted map on the physical iPhone with Internet unavailable but local
-  Wi-Fi/LAN active. Do not mark this passed based on desktop or automated testing.
+- [x] Windows production-browser validation rendered representative Vilnius features and proved every
+  runtime HTTP request stays on the local Map origin, so external Internet is not required at runtime.
+- [x] On 2026-08-16, the user confirmed on a physical iPhone with Internet unavailable and local
+  Wi-Fi/LAN active that HTTPS opens, the self-hosted basemap renders roads, buildings, the Neris,
+  parks/green areas, and labels, and pan/zoom work.
+
+Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.

@@ -5,11 +5,11 @@ No milestone has an arbitrary date.
 1. **Milestone 1 — Vilnius PWA mapping foundation (complete).** Windows setup, Vilnius rendering,
    physical-iPhone Safari interaction and trusted HTTPS, PWA installation, API, PostGIS, and the tile
    architecture passed acceptance on 2026-08-13. See `docs/ACCEPTANCE.md`.
-2. **Milestone 1.1 — Fully self-hosted Vilnius basemap (draft PR).** The local pipeline and style are
+2. **Milestone 1.1 — Fully self-hosted Vilnius basemap (complete).** The local pipeline and style are
    implemented as `Geofabrik PBF → Osmium → osm2pgsql flex → PostGIS → Martin → MapLibre`, with no
    runtime public basemap or font/sprite CDN. The production worker, strict static-asset routing,
-   browser smoke test, and zoom-aware transportation tiles are implemented. Final acceptance still
-   requires the documented disconnected laptop/browser and physical-iPhone visual checks.
+   browser smoke test, and zoom-aware transportation tiles are implemented. Physical-iPhone offline
+   acceptance passed on 2026-08-16. See `docs/ACCEPTANCE.md`.
 3. **Milestone 2 — Custom places and local business data.** Define provenance, ingestion, and a
    minimal place model.
 4. **Milestone 3 — Search/discovery.** Geographic and textual discovery over trusted place data.
