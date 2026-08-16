@@ -87,7 +87,7 @@ Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
 
 Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
 
-## Milestone 3 draft acceptance
+## Milestone 3 acceptance
 
 - [x] Search reads only active `app.places` data and returns compact results without full provenance.
 - [x] Exact, prefix, partial, category alias, and lightweight trigram typo searches are deterministic.

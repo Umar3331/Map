@@ -1,17 +1,28 @@
 # Map
 
-Map is an evolving location-based platform intended eventually to connect people with real local
-services. The long-term flow is **need → discovery → comparison → availability → action**. Today the
-project is deliberately focused on its geographic foundation.
+Map is a local-first location and services discovery platform currently focused on Vilnius. Its
+implemented flow is **map → browse places → search/discovery → place details**. The longer-term
+direction is **need → discovery → provider/service comparison → availability → booking/action**;
+provider comparison, availability, and booking are not implemented yet.
 
-## Map v0.1 — Vilnius PWA
+## Current capabilities
 
-Milestone 1 is an installable, mobile-first map for Vilnius. It provides a React/TypeScript PWA,
-MapLibre GL JS, a same-origin local gateway, FastAPI, PostgreSQL/PostGIS, and Martin vector tiles.
-The map supports desktop and touch interaction, optional one-shot browser geolocation, and iPhone
-Home Screen installation. Search is visibly marked as future functionality.
+- Installable React/TypeScript PWA validated on desktop and a physical iPhone.
+- Trusted local HTTPS and a fully self-hosted Vilnius vector basemap backed by local OSM/PostGIS data.
+- 4,724 application-owned places with category-aware browsing, clustering, and responsive details.
+- Local PostgreSQL-backed exact, prefix, fuzzy, and category-intent search.
+- Search-result map mode that focuses discovery while preserving normal place browsing when cleared.
+- Fully local runtime after the source data has been downloaded and imported.
 
-### Why PWA first?
+## Project status
+
+- **Complete:** Milestone 1 (Vilnius PWA foundation), Milestone 1.1 (self-hosted basemap), Milestone 2
+  (places/local businesses), and Milestone 3 (search/discovery).
+- **Next:** Milestone 4 — service-provider profiles. This work has not started.
+
+See the [full roadmap](docs/ROADMAP.md) for the remaining direction and sequencing.
+
+## Why the PWA architecture?
 
 Windows 11 is the primary development environment and no unrestricted Mac/Xcode machine is
 available. A PWA makes the complete client build and test workflow available on Windows while
@@ -22,16 +33,24 @@ client architecture, not a throwaway substitute.
 ## Architecture
 
 ```mermaid
-flowchart LR
-    W["Windows 11"] --> P["React + TypeScript PWA"]
-    P -->|"same origin /api"| A["FastAPI"]
-    P -->|"same origin /tiles"| T["Martin"]
-    A --> D["PostgreSQL + PostGIS"]
-    T --> D
-    O["Geofabrik Lithuania PBF<br/>download/update only"] --> X["Osmium Vilnius extract"]
-    X --> G["osm2pgsql flex import"]
-    G --> D
-    I["iPhone Safari / installed PWA"] -->|"same Wi-Fi"| P
+flowchart TB
+    U["Desktop browser / iPhone PWA"] --> C["Caddy same-origin gateway"]
+    C -->|"API, search, and health"| A["FastAPI"]
+    C -->|"vector tiles"| M["Martin"]
+
+    subgraph DB["PostgreSQL + PostGIS"]
+        APP["app.places<br/>application-owned place/search domain"]
+        OSM["osm.*<br/>basemap/import geography"]
+    end
+
+    A --> APP
+    M --> OSM
+    APP --> S["PostgreSQL place search"]
+
+    PBF["Geofabrik PBF"] --> O["Osmium Vilnius extract"]
+    O --> IMP["osm2pgsql imports"]
+    IMP --> OSM
+    IMP --> APP
 ```
 
 The web gateway is the only browser-facing integration point. This prevents an iPhone from receiving
@@ -56,7 +75,8 @@ Copy-Item .env.example .env
 Open `http://localhost:5173`. The start script also prints the active LAN URL and optional HTTPS PWA
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
-Milestone 1 acceptance, including physical-iPhone HTTPS and interaction, is complete and recorded in
+Place browsing and search are available after `.\scripts\places-data.ps1` completes. Acceptance for
+Milestones 1 through 3, including physical-iPhone validation, is recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
 ## Self-hosted Vilnius map data
@@ -97,6 +117,16 @@ place-details card or mobile bottom sheet. See
 - `scripts` — Windows-first workflow and map-data preparation
 - `archive/ios-prototype` — preserved, inactive SwiftUI experiment
 - `docs` — product, architecture, decisions, roadmap, and operating guides
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Acceptance](docs/ACCEPTANCE.md)
+- [Place data and provenance](docs/PLACES_DATA.md)
+- [Search](docs/SEARCH.md)
+- [Local development](docs/LOCAL_DEVELOPMENT.md)
+- [iPhone installation](docs/IPHONE_INSTALLATION.md)
 
 Project source licensing has not yet been selected. OpenStreetMap data is © OpenStreetMap
 contributors under ODbL; dependencies retain their upstream licenses.
