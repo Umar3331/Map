@@ -124,4 +124,5 @@ control, not continuously tracked, stored, or sent.
 
 Cloud work remains deferred. Candidate mappings—not commitments—include PostGIS to RDS, FastAPI and
 the web gateway to container hosting, and generated map assets to object storage/CDN. AWS, Terraform,
-Kubernetes, authentication, routing, and marketplace workflows are outside Milestone 1.
+Kubernetes, authentication, routing, and marketplace workflows remain outside the current local
+Vilnius scope.

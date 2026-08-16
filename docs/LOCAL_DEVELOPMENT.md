@@ -115,7 +115,7 @@ licensing details.
 
 ## Local search
 
-Run `scripts/places-data.ps1` after pulling the Milestone 3 schema so the idempotent place setup
+Run `scripts/places-data.ps1` after cloning or pulling schema changes so the idempotent place setup
 installs `pg_trgm`, search normalization, and indexes. Validate the imported search catalogue with:
 
 ```powershell
