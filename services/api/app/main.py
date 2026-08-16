@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Response
 
-from app import mobileconfig, places
+from app import mobileconfig, places, search
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Map API", version="0.1.0", lifespan=lifespan)
 app.include_router(places.router)
+app.include_router(search.router)
 
 VILNIUS = {
     "region": "vilnius",

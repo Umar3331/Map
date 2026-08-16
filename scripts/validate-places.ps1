@@ -15,6 +15,9 @@ SELECT 'places=' || (to_regclass('app.places') IS NOT NULL)::int;
 SELECT 'sources=' || (to_regclass('app.place_sources') IS NOT NULL)::int;
 SELECT 'geom_index=' || (to_regclass('app.places_geom_idx') IS NOT NULL)::int;
 SELECT 'category_index=' || (to_regclass('app.places_category_idx') IS NOT NULL)::int;
+SELECT 'search_trigram_index=' || (to_regclass('app.places_normalized_name_trgm_idx') IS NOT NULL)::int;
+SELECT 'search_prefix_index=' || (to_regclass('app.places_normalized_name_prefix_idx') IS NOT NULL)::int;
+SELECT 'subcategory_index=' || (to_regclass('app.places_subcategory_idx') IS NOT NULL)::int;
 SELECT 'active=' || count(*) FROM app.places WHERE status='active';
 SELECT 'duplicates=' || count(*) FROM (
   SELECT source_id,external_id FROM app.places GROUP BY source_id,external_id HAVING count(*)>1
@@ -34,7 +37,10 @@ foreach ($Line in $Output) {
     $Parts = $Line -split '='
     $Values[$Parts[0]] = [int64]$Parts[1]
 }
-foreach ($Required in @('schema', 'places', 'sources', 'geom_index', 'category_index', 'stable_runs')) {
+foreach ($Required in @(
+    'schema', 'places', 'sources', 'geom_index', 'category_index',
+    'search_trigram_index', 'search_prefix_index', 'subcategory_index', 'stable_runs'
+)) {
     if ($Values[$Required] -ne 1) { throw "Place validation failed: $Required" }
 }
 if ($Values.active -le 0) { throw 'Place validation failed: no active places.' }

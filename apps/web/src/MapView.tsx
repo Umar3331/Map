@@ -8,6 +8,8 @@ import { createVilniusStyle } from './mapStyle'
 import { installPlaceLayers, placeLayerIds, placeSourceId, updatePlaceSource } from './placeLayers'
 import { PlaceDetailsPanel } from './PlaceDetailsPanel'
 import { loadPlaceDetails, loadPlaces, placesForMap, type PlaceDetails } from './places'
+import { SearchBox } from './SearchBox'
+import type { SearchContext, SearchResult } from './search'
 
 type MapViewProps = {
   config: MapConfig
@@ -16,7 +18,10 @@ type MapViewProps = {
 export function MapView({ config }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const selectPlaceRef = useRef<(result: SearchResult) => void>(() => undefined)
+  const searchSelectionRef = useRef(false)
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
+  const [searchContext, setSearchContext] = useState<SearchContext | null>(null)
   const [placesStatus, setPlacesStatus] = useState<
     'loading' | 'ready' | 'empty' | 'truncated' | 'error'
   >('loading')
@@ -74,6 +79,59 @@ export function MapView({ config }: MapViewProps) {
     })
     mapRef.current = map
 
+    const updateSearchContext = () => {
+      const bounds = map.getBounds()
+      const center = map.getCenter()
+      setSearchContext({
+        bounds: {
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        },
+        latitude: center.lat,
+        longitude: center.lng,
+      })
+      mapContainer.dataset.mapCenter = `${center.lng.toFixed(6)},${center.lat.toFixed(6)}`
+      mapContainer.dataset.mapZoom = map.getZoom().toFixed(2)
+    }
+
+    const selectPlace = async (
+      placeId: number,
+      coordinates: [number, number],
+      fromSearch: boolean,
+    ) => {
+      mapContainer.dataset.selectedPlaceId = String(placeId)
+      if (fromSearch) {
+        mapContainer.dataset.searchSelectedPlaceId = String(placeId)
+        searchSelectionRef.current = true
+        map.easeTo({
+          center: coordinates,
+          zoom: Math.max(map.getZoom(), 16),
+          duration: 650,
+        })
+      } else {
+        delete mapContainer.dataset.searchSelectedPlaceId
+        searchSelectionRef.current = false
+      }
+      if (map.getLayer(placeLayerIds.selected)) {
+        map.setFilter(placeLayerIds.selected, ['==', ['id'], placeId])
+      }
+      detailsController?.abort()
+      detailsController = new AbortController()
+      try {
+        const details = await loadPlaceDetails(placeId, detailsController.signal)
+        if (!disposed) setSelectedPlace(details)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        if (!disposed) setPlacesStatus('error')
+      }
+    }
+
+    selectPlaceRef.current = (result) => {
+      void selectPlace(result.id, [result.longitude, result.latitude], true)
+    }
+
     const loadViewportPlaces = () => {
       if (viewportTimer) clearTimeout(viewportTimer)
       viewportTimer = setTimeout(async () => {
@@ -124,10 +182,18 @@ export function MapView({ config }: MapViewProps) {
 
     map.on('load', () => {
       installPlaceLayers(map)
+      const selectedPlaceId = Number(mapContainer.dataset.selectedPlaceId)
+      if (Number.isFinite(selectedPlaceId)) {
+        map.setFilter(placeLayerIds.selected, ['==', ['id'], selectedPlaceId])
+      }
       mapContainer.dataset.placeLayers = Object.values(placeLayerIds).join(',')
+      updateSearchContext()
       loadViewportPlaces()
     })
-    map.on('moveend', loadViewportPlaces)
+    map.on('moveend', () => {
+      updateSearchContext()
+      loadViewportPlaces()
+    })
     map.on('click', placeLayerIds.clusters, async (event) => {
       const feature = event.features?.[0]
       const clusterId = Number(feature?.properties?.cluster_id)
@@ -141,17 +207,10 @@ export function MapView({ config }: MapViewProps) {
       const feature = event.features?.[0]
       const placeId = Number(feature?.properties?.id ?? feature?.id)
       if (!Number.isFinite(placeId)) return
-      mapContainer.dataset.selectedPlaceId = String(placeId)
-      map.setFilter(placeLayerIds.selected, ['==', ['id'], placeId])
-      detailsController?.abort()
-      detailsController = new AbortController()
-      try {
-        const details = await loadPlaceDetails(placeId, detailsController.signal)
-        if (!disposed) setSelectedPlace(details)
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        if (!disposed) setPlacesStatus('error')
-      }
+      const coordinates = feature?.geometry.type === 'Point'
+        ? feature.geometry.coordinates as [number, number]
+        : [0, 0] as [number, number]
+      await selectPlace(placeId, coordinates, false)
     })
     for (const layer of [placeLayerIds.clusters, placeLayerIds.points]) {
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
@@ -163,15 +222,25 @@ export function MapView({ config }: MapViewProps) {
       if (viewportTimer) clearTimeout(viewportTimer)
       placesController?.abort()
       detailsController?.abort()
+      selectPlaceRef.current = () => undefined
       mapRef.current = null
       map.remove()
     }
   }, [config])
 
   const closeDetails = () => {
-    mapRef.current?.setFilter(placeLayerIds.selected, ['==', ['id'], -1])
+    const map = mapRef.current
+    if (map?.getLayer(placeLayerIds.selected)) {
+      map.setFilter(placeLayerIds.selected, ['==', ['id'], -1])
+    }
     if (containerRef.current) delete containerRef.current.dataset.selectedPlaceId
+    if (containerRef.current) delete containerRef.current.dataset.searchSelectedPlaceId
+    searchSelectionRef.current = false
     setSelectedPlace(null)
+  }
+
+  const clearSearchSelection = () => {
+    if (searchSelectionRef.current) closeDetails()
   }
 
   return (
@@ -182,6 +251,15 @@ export function MapView({ config }: MapViewProps) {
         aria-label={`Interactive map of ${regionName}`}
         data-places-status={placesStatus}
       />
+      <header className="top-bar">
+        <div className="brand" aria-label="Map home">M</div>
+        <SearchBox
+          regionName={regionName}
+          context={searchContext}
+          onClear={clearSearchSelection}
+          onSelect={(result) => selectPlaceRef.current(result)}
+        />
+      </header>
       {placesStatus === 'loading' && <div className="places-status" role="status">Loading places…</div>}
       {placesStatus === 'empty' && <div className="places-status">No places in this view</div>}
       {placesStatus === 'truncated' && (

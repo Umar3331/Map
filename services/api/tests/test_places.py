@@ -92,8 +92,7 @@ class FakePlacesRepository:
                     "coordinates": [place["longitude"], place["latitude"]],
                 },
                 "properties": {
-                    key: place[key]
-                    for key in ("id", "name", "category", "subcategory")
+                    key: place[key] for key in ("id", "name", "category", "subcategory")
                 },
             }
             for place in matches
@@ -133,9 +132,7 @@ client = TestClient(app)
 
 
 def test_place_list_is_geojson_and_filtered_by_bounds() -> None:
-    response = client.get(
-        "/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75"
-    )
+    response = client.get("/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75")
     assert response.status_code == 200
     payload = response.json()
     assert payload["type"] == "FeatureCollection"
@@ -156,16 +153,12 @@ def test_place_list_filters_category() -> None:
     )
     assert response.status_code == 200
     payload = response.json()
-    assert [item["properties"]["category"] for item in payload["features"]] == [
-        "health"
-    ]
+    assert [item["properties"]["category"] for item in payload["features"]] == ["health"]
     assert payload["meta"] == {"returned": 1, "total": 1, "truncated": False}
 
 
 def test_place_list_marks_total_below_limit_as_not_truncated() -> None:
-    response = client.get(
-        "/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75&limit=3"
-    )
+    response = client.get("/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75&limit=3")
     assert response.status_code == 200
     assert response.json()["meta"] == {
         "returned": 2,
@@ -175,9 +168,7 @@ def test_place_list_marks_total_below_limit_as_not_truncated() -> None:
 
 
 def test_place_list_marks_total_equal_to_limit_as_not_truncated() -> None:
-    response = client.get(
-        "/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75&limit=2"
-    )
+    response = client.get("/api/v1/places?west=25.20&south=54.60&east=25.35&north=54.75&limit=2")
     assert response.status_code == 200
     assert response.json()["meta"] == {
         "returned": 2,
@@ -187,9 +178,7 @@ def test_place_list_marks_total_equal_to_limit_as_not_truncated() -> None:
 
 
 def test_place_list_marks_total_above_limit_as_truncated() -> None:
-    response = client.get(
-        "/api/v1/places?west=25.10&south=54.55&east=25.50&north=54.85&limit=1"
-    )
+    response = client.get("/api/v1/places?west=25.10&south=54.55&east=25.50&north=54.85&limit=1")
     assert response.status_code == 200
     assert response.json()["meta"] == {
         "returned": 1,
@@ -199,9 +188,12 @@ def test_place_list_marks_total_above_limit_as_truncated() -> None:
 
 
 def test_place_list_enforces_maximum_limit() -> None:
-    assert client.get(
-        "/api/v1/places?west=25.10&south=54.55&east=25.50&north=54.85&limit=501"
-    ).status_code == 422
+    assert (
+        client.get(
+            "/api/v1/places?west=25.10&south=54.55&east=25.50&north=54.85&limit=501"
+        ).status_code
+        == 422
+    )
 
 
 def test_place_details_include_provenance() -> None:
@@ -219,9 +211,10 @@ def test_place_details_returns_404() -> None:
 
 
 def test_place_list_rejects_invalid_bounds_and_category() -> None:
-    assert client.get(
-        "/api/v1/places?west=25.4&south=54.6&east=25.2&north=54.7"
-    ).status_code == 422
-    assert client.get(
-        "/api/v1/places?west=25.2&south=54.6&east=25.4&north=54.7&category=unknown"
-    ).status_code == 422
+    assert client.get("/api/v1/places?west=25.4&south=54.6&east=25.2&north=54.7").status_code == 422
+    assert (
+        client.get(
+            "/api/v1/places?west=25.2&south=54.6&east=25.4&north=54.7&category=unknown"
+        ).status_code
+        == 422
+    )

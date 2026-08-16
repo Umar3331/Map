@@ -132,3 +132,15 @@ FastAPI GeoJSON, not Martin basemap tiles, and render them as MapLibre-native cl
 imports remain idempotent; attribution and licensing remain traceable; future sources can be added
 without discarding OSM IDs. Cross-source fuzzy deduplication, provider claims, search, rankings, and
 editing workflows remain deferred.
+
+## ADR-022 — PostgreSQL search before a dedicated search service
+**Status:** Accepted. **Context:** Milestone 3 searches approximately 4,700 application-owned Vilnius
+places. A separate search cluster would add deployment, synchronization, security, and Windows
+operational complexity without a demonstrated scale or relevance need. **Decision:** Implement
+deterministic local search in PostgreSQL using canonical names, a punctuation/whitespace-normalized
+search form, B-tree prefix and subcategory indexes, and a GIN `pg_trgm` index. Keep aliases small and
+explicit in FastAPI. Rank textual quality before viewport/distance bias and return at most 25 compact
+results. **Consequences:** Search remains transactional with `app.places`, fully local, and simple to
+operate. Typo tolerance is deliberately lightweight; multilingual stemming, semantic search,
+recommendations, and a dedicated search service remain deferred until measured product needs justify
+them.

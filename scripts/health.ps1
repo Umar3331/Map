@@ -11,6 +11,11 @@ if ($Places.type -ne 'FeatureCollection' -or $Places.features.Count -lt 1 -or $P
     -or $Places.meta.truncated -ne ($Places.meta.total -gt $Places.meta.returned)) {
     throw 'Map place endpoint returned unexpected data. Run .\scripts\places-data.ps1 first.'
 }
+$Search = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/search?q=Maxima&limit=1" -TimeoutSec 10
+if ($Search.query -ne 'maxima' -or $Search.meta.returned -ne 1 `
+    -or $Search.results.Count -ne 1 -or $Search.results[0].name -notmatch '^Maxima') {
+    throw 'Map search endpoint returned unexpected data.'
+}
 $Health | ConvertTo-Json
 $Config | ConvertTo-Json -Depth 4
-Write-Host "PWA gateway, API health, Vilnius configuration, and bounded places checks passed ($($Places.features.Count) places)." -ForegroundColor Green
+Write-Host "PWA gateway, API health, Vilnius configuration, bounded places, and search checks passed ($($Places.features.Count) places)." -ForegroundColor Green

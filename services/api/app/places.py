@@ -41,6 +41,22 @@ def close_places_pool() -> None:
 
 
 class PlacesRepository(Protocol):
+    def search_places(
+        self,
+        *,
+        query: str,
+        category: str | None,
+        alias_category: str | None,
+        alias_subcategory: str | None,
+        west: float | None,
+        south: float | None,
+        east: float | None,
+        north: float | None,
+        latitude: float | None,
+        longitude: float | None,
+        limit: int,
+    ) -> list[dict[str, Any]]: ...
+
     def count_places(
         self,
         *,
@@ -163,6 +179,125 @@ class PostgresPlacesRepository:
             row = cursor.execute(query, parameters).fetchone()
         return int(row[0]) if row else 0
 
+    def search_places(
+        self,
+        *,
+        query: str,
+        category: str | None,
+        alias_category: str | None,
+        alias_subcategory: str | None,
+        west: float | None,
+        south: float | None,
+        east: float | None,
+        north: float | None,
+        latitude: float | None,
+        longitude: float | None,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        has_viewport = all(value is not None for value in (west, south, east, north))
+        has_origin = latitude is not None and longitude is not None
+        sql = """
+            WITH ranked AS (
+                SELECT
+                    place.id,
+                    place.name,
+                    place.normalized_name,
+                    place.category,
+                    place.subcategory,
+                    place.address_line,
+                    ST_X(place.geom) AS longitude,
+                    ST_Y(place.geom) AS latitude,
+                    similarity(place.normalized_name, %(query)s) AS name_similarity,
+                    CASE
+                        WHEN place.normalized_name = %(query)s THEN 100
+                        WHEN place.normalized_name LIKE %(query)s || '%%' THEN 90
+                        WHEN similarity(place.normalized_name, %(query)s) >= 0.55 THEN 80
+                        WHEN CAST(%(alias_subcategory)s AS text) IS NOT NULL
+                          AND place.subcategory = CAST(%(alias_subcategory)s AS text) THEN 70
+                        WHEN CAST(%(alias_category)s AS text) IS NOT NULL
+                          AND place.category = CAST(%(alias_category)s AS text) THEN 65
+                        WHEN place.normalized_name LIKE '%%' || %(query)s || '%%' THEN 60
+                        ELSE 50
+                    END AS relevance,
+                    CASE WHEN CAST(%(has_viewport)s AS boolean) THEN
+                        ST_Intersects(
+                            place.geom,
+                            ST_MakeEnvelope(
+                                CAST(%(west)s AS double precision),
+                                CAST(%(south)s AS double precision),
+                                CAST(%(east)s AS double precision),
+                                CAST(%(north)s AS double precision),
+                                4326
+                            )
+                        )
+                    ELSE false END AS in_viewport,
+                    CASE WHEN CAST(%(has_origin)s AS boolean) THEN
+                        ST_DistanceSphere(
+                            place.geom,
+                            ST_SetSRID(
+                                ST_MakePoint(
+                                    CAST(%(longitude)s AS double precision),
+                                    CAST(%(latitude)s AS double precision)
+                                ),
+                                4326
+                            )
+                        )
+                    END AS distance_m
+                FROM app.places AS place
+                WHERE place.status = 'active'
+                  AND (CAST(%(category)s AS text) IS NULL
+                    OR place.category = CAST(%(category)s AS text))
+                  AND (
+                    place.normalized_name = %(query)s
+                    OR place.normalized_name LIKE %(query)s || '%%'
+                    OR place.normalized_name LIKE '%%' || %(query)s || '%%'
+                    OR place.normalized_name %% %(query)s
+                    OR (CAST(%(alias_category)s AS text) IS NOT NULL
+                        AND place.category = CAST(%(alias_category)s AS text))
+                    OR (CAST(%(alias_subcategory)s AS text) IS NOT NULL
+                        AND place.subcategory = CAST(%(alias_subcategory)s AS text))
+                  )
+            )
+            SELECT
+                id, name, category, subcategory, address_line,
+                longitude, latitude, distance_m
+            FROM ranked
+            ORDER BY
+                relevance DESC,
+                name_similarity DESC,
+                in_viewport DESC,
+                distance_m ASC NULLS LAST,
+                normalized_name,
+                id
+            LIMIT %(limit)s
+        """
+        parameters = {
+            "query": query,
+            "category": category,
+            "alias_category": alias_category,
+            "alias_subcategory": alias_subcategory,
+            "has_viewport": has_viewport,
+            "west": west,
+            "south": south,
+            "east": east,
+            "north": north,
+            "has_origin": has_origin,
+            "latitude": latitude,
+            "longitude": longitude,
+            "limit": limit,
+        }
+        with self.connection.cursor(row_factory=dict_row) as cursor:
+            rows = cursor.execute(sql, parameters).fetchall()
+        return [
+            {
+                **dict(row),
+                "distance_m": (
+                    round(float(row["distance_m"])) if row["distance_m"] is not None else None
+                ),
+            }
+            for row in rows
+        ]
+
     def get_place(self, place_id: int) -> dict[str, Any] | None:
         query = """
             SELECT
@@ -207,9 +342,7 @@ def get_places_repository() -> Iterator[PlacesRepository]:
         yield PostgresPlacesRepository(connection)
 
 
-def _feature_collection(
-    features: list[dict[str, Any]], total: int
-) -> dict[str, Any]:
+def _feature_collection(features: list[dict[str, Any]], total: int) -> dict[str, Any]:
     returned = len(features)
     return {
         "type": "FeatureCollection",

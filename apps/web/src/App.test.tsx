@@ -24,6 +24,5 @@ it('renders the Vilnius map after configuration loads', async () => {
   const { default: App } = await import('./App')
   render(<App />)
 
-  await waitFor(() => expect(screen.getByText('Search Vilnius')).toBeInTheDocument())
   await waitFor(() => expect(screen.getByLabelText('Interactive map of Vilnius')).toBeInTheDocument())
 })

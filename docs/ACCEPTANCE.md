@@ -86,3 +86,28 @@ Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
   layout has no horizontal overflow, and the existing HTTPS/PWA behavior remains correct.
 
 Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
+
+## Milestone 3 draft acceptance
+
+- [x] Search reads only active `app.places` data and returns compact results without full provenance.
+- [x] Exact, prefix, partial, category alias, and lightweight trigram typo searches are deterministic.
+- [x] Search normalization handles case, outer/repeated whitespace, punctuation, and UTF-8 names
+  without changing canonical names or removing Lithuanian diacritics.
+- [x] PostgreSQL prefix, trigram GIN, category, subcategory, and spatial indexes are installed and
+  representative `EXPLAIN ANALYZE` plans avoid inappropriate sequential scans.
+- [x] Text relevance outranks geographic context; viewport membership and distance bias only break
+  roughly equivalent matches.
+- [x] Desktop results support Arrow Up/Down, Enter, Escape, clear, and accessible combobox/listbox
+  semantics.
+- [x] Result selection moves MapLibre to zoom 16, selects the place, and reuses the existing place
+  details card or mobile bottom sheet.
+- [x] The 390-by-844 production layout has touch-friendly results, a clean search-to-details
+  transition, and no horizontal overflow.
+- [x] Live quality checks pass for Maxima, Rimi, cafe, restaurant, pharmacy, gym, hotel, bank, and
+  representative prefix/typo queries.
+- [x] Frontend/backend tests, production build, Compose/live validation, five Playwright production
+  scenarios, and Windows Edge visual/console checks pass.
+- [ ] Physical-iPhone search, keyboard, result selection, details transition, and clear/back
+  acceptance remains for user validation.
+
+Milestone 3 remains in a draft pull request and must not be merged before physical-iPhone acceptance.

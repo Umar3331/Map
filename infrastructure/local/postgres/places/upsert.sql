@@ -45,7 +45,7 @@ CREATE TEMP TABLE valid_places AS
 SELECT DISTINCT ON (external_id)
     external_id,
     btrim(name) AS name,
-    lower(regexp_replace(btrim(name), '\s+', ' ', 'g')) AS normalized_name,
+    app.normalize_search_text(name) AS normalized_name,
     category,
     subcategory,
     jsonb_build_object('key', raw_key, 'value', raw_value) AS raw_classification,
