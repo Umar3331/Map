@@ -60,7 +60,7 @@ hostname receive the active RSA IP-SAN leaf. Milestone 1 acceptance passed on 20
 
 Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
 
-## Milestone 2 draft acceptance
+## Milestone 2 acceptance
 
 - [x] A repeatable, Windows-first OSM importer populates application-owned `app.places` data.
 - [x] Two consecutive imports preserve active place count and stable source identities.
@@ -79,6 +79,10 @@ Milestone 1.1 physical-iPhone offline acceptance passed on 2026-08-16.
   production Playwright browser suite pass.
 - [x] Playwright verifies real marker selection, detail rendering, dismissal, viewport reload, and a
   390-by-844 responsive layout with no horizontal overflow.
-- [ ] Physical-iPhone marker interaction and details-panel acceptance is pending user validation.
+- [x] On 2026-08-17, the user confirmed on a physical iPhone that broad viewports show truncation
+  guidance, zoomed-in complete clusters and markers render, markers are selectable, and selecting a
+  different place updates the mobile bottom sheet with the correct details.
+- [x] On the physical iPhone, the details sheet dismisses correctly, panning reloads places, the
+  layout has no horizontal overflow, and the existing HTTPS/PWA behavior remains correct.
 
-Milestone 2 remains in a draft pull request until the physical-iPhone check and review are complete.
+Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
