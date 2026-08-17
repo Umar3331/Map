@@ -152,7 +152,7 @@ Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
 
 Milestone 4 physical-iPhone re-acceptance passed on 2026-08-17.
 
-## Milestone 5 draft acceptance
+## Milestone 5 acceptance
 
 - [x] Availability is attached to a provider service at a provider location through a constrained
   bookable offering, not directly to a provider, service type, or place.
@@ -168,4 +168,12 @@ Milestone 4 physical-iPhone re-acceptance passed on 2026-08-17.
   report that no schedule is configured.
 - [x] Date switching, closed/no-schedule/no-availability states, slot-only visual selection, and
   back/close behavior pass frontend tests; no booking write is exposed.
-- [ ] Physical-iPhone availability acceptance remains for the user after draft PR review.
+- [x] Physical-iPhone acceptance confirms configured services expose availability, the seven-day
+  selector and time slots work, switching dates refreshes slots, and closed/no-availability states
+  are clear.
+- [x] Physical-iPhone acceptance confirms unconfigured services report no schedule, selecting a
+  slot creates no reservation or booking, and a second configured provider/service works.
+- [x] Physical-iPhone acceptance confirms bottom-sheet back/close transitions, no horizontal
+  overflow, intact search/map/provider flows, and trusted HTTPS/installed-PWA behavior.
+
+Milestone 5 physical-iPhone availability acceptance passed on 2026-08-17.

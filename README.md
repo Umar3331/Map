@@ -23,8 +23,9 @@ implemented yet.
 - **Complete:** Milestone 1 (Vilnius PWA foundation), Milestone 1.1 (self-hosted basemap), Milestone 2
   (places/local businesses), Milestone 3 (search/discovery), and Milestone 4 (service-provider
   profiles and controlled service discovery).
-- **In progress:** Milestone 5 — read-only availability foundation using clearly labelled
-  development fixtures. Booking is not implemented.
+- **Complete:** Milestone 5 — read-only availability foundation using clearly labelled development
+  fixtures, including physical-iPhone acceptance.
+- **Next:** Milestone 6 — routing/navigation evaluation. Booking is not implemented.
 
 See the [full roadmap](docs/ROADMAP.md) for the remaining direction and sequencing.
 
@@ -93,7 +94,7 @@ URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
 Place browsing and search are available after `.\scripts\places-data.ps1` completes. Provider and
 service profiles are seeded by `.\scripts\provider-data.ps1`; deterministic demo schedules are
-seeded by `.\scripts\availability-data.ps1`. Acceptance for Milestones 1 through 4
+seeded by `.\scripts\availability-data.ps1`. Acceptance for Milestones 1 through 5
 is recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
