@@ -18,9 +18,10 @@ provider comparison, availability, and booking are not implemented yet.
 ## Project status
 
 - **Complete:** Milestone 1 (Vilnius PWA foundation), Milestone 1.1 (self-hosted basemap), Milestone 2
-  (places/local businesses), and Milestone 3 (search/discovery).
-- **In progress:** Milestone 4 — service-provider profiles. Windows production-browser acceptance is
-  complete; physical-iPhone acceptance remains outstanding.
+  (places/local businesses), Milestone 3 (search/discovery), and Milestone 4 (service-provider
+  profiles and controlled service discovery).
+- **Next:** Milestone 5 — availability/booking foundation. Availability and booking are not yet
+  implemented.
 
 See the [full roadmap](docs/ROADMAP.md) for the remaining direction and sequencing.
 
@@ -52,7 +53,8 @@ flowchart TB
     PROVIDERS --> SERVICES
     PROVIDERS --> APP
     M --> OSM
-    APP --> S["PostgreSQL place search"]
+    APP --> S["PostgreSQL place/service search"]
+    SERVICES --> S
 
     PBF["Geofabrik PBF"] --> O["Osmium Vilnius extract"]
     O --> IMP["osm2pgsql imports"]
@@ -84,8 +86,8 @@ Open `http://localhost:5173`. The start script also prints the active LAN URL an
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
 Place browsing and search are available after `.\scripts\places-data.ps1` completes. Provider and
-service profiles are seeded by `.\scripts\provider-data.ps1`. Acceptance for Milestones 1 through 3
-and the current Milestone 4 gate are recorded in
+service profiles are seeded by `.\scripts\provider-data.ps1`. Acceptance for Milestones 1 through 4
+is recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
 ## Self-hosted Vilnius map data
@@ -115,8 +117,8 @@ through normalized provider offerings. Search supports exact, prefix, partial, a
 typo-tolerant names; taxonomy categories; and service terms such as `car repair`, `haircut`, and
 `spa`. Specific brand queries retain name-first ranking. While results are active, a dedicated
 MapLibre source replaces unrelated viewport POIs so
-the map shows the search context. Selecting a result moves the map to zoom 16 and reuses the existing
-place-details card or mobile bottom sheet. See
+the map shows the search context. Selecting a place result opens place details; selecting a service
+result focuses its provider location and opens the existing provider profile directly. See
 [search architecture and behavior](docs/SEARCH.md).
 
 ## Vilnius providers and services

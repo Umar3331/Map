@@ -123,7 +123,7 @@ Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
 
 Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
 
-## Milestone 4 draft acceptance
+## Milestone 4 acceptance
 
 - [x] Provider identity is separate from places, provider locations reference places, and services
   use a normalized catalogue and provider-service join.
@@ -146,4 +146,8 @@ Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
   `Spartuko kebabai` because of a place-name substring.
 - [x] `car repair` returns vehicle-repair providers; selecting a service result focuses its location
   and opens the existing provider profile on desktop and at 390 by 844.
-- [ ] Physical-iPhone provider/service interaction acceptance remains for the user.
+- [x] Physical-iPhone re-acceptance confirms service-aware `spa`, `car repair`, and `haircut`
+  discovery; direct provider-profile opening; place-detail Back behavior; search clearing; normal
+  brand/category search; responsive bottom sheets; trusted HTTPS; and installed-PWA behavior.
+
+Milestone 4 physical-iPhone re-acceptance passed on 2026-08-17.

@@ -20,11 +20,11 @@ No milestone has an arbitrary date.
    intent, taxonomy-complete category candidates, bounded search-result map layers, accessible
    desktop/mobile results, map focus, and existing detail-panel reuse. Automated, Windows
    production-browser, and physical-iPhone re-acceptance passed on 2026-08-17.
-5. **Milestone 4 — Service-provider profiles (in progress).** Separate provider identity, provider
+5. **Milestone 4 — Service-provider profiles (complete).** Separate provider identity, provider
    locations, normalized services, provenance, read-only APIs, and responsive profile UI are
    implemented. Controlled service-intent discovery connects normalized offerings to the existing
-   search/map/profile flow. Automated and Windows production-browser acceptance pass;
-   physical-iPhone acceptance remains the completion gate.
+   search/map/profile flow. Automated, Windows production-browser, and physical-iPhone
+   re-acceptance passed on 2026-08-17.
 6. **Milestone 5 — Availability/booking foundation.** Evaluate availability semantics and actions.
 7. **Milestone 6 — Routing/navigation evaluation.** Assess needs and open data/tooling.
 8. **Milestone 7 — AI natural-language geographic queries.** Add grounded query interpretation.
