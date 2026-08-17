@@ -3,6 +3,8 @@ import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 
+import { AvailabilityPanel } from './AvailabilityPanel'
+import { loadProviderOfferings, type BookableOffering } from './availability'
 import type { MapConfig } from './config'
 import { createVilniusStyle } from './mapStyle'
 import { installPlaceLayers, placeLayerIds, placeSourceId, updatePlaceSource } from './placeLayers'
@@ -42,10 +44,16 @@ export function MapView({ config }: MapViewProps) {
   const [providersStatus, setProvidersStatus] = useState<'loading' | 'ready' | 'error'>('ready')
   const [providerView, setProviderView] = useState<
     | { status: 'loading' }
-    | { status: 'ready'; provider: ProviderProfile; services: ProviderService[] }
+    | {
+      status: 'ready'
+      provider: ProviderProfile
+      services: ProviderService[]
+      offerings: BookableOffering[]
+    }
     | { status: 'error' }
     | null
   >(null)
+  const [selectedOffering, setSelectedOffering] = useState<BookableOffering | null>(null)
   const providerProfileControllerRef = useRef<AbortController | null>(null)
   const [searchContext, setSearchContext] = useState<SearchContext | null>(null)
   const [searchActive, setSearchActive] = useState(false)
@@ -61,13 +69,15 @@ export function MapView({ config }: MapViewProps) {
     providerProfileControllerRef.current?.abort()
     const controller = new AbortController()
     providerProfileControllerRef.current = controller
+    setSelectedOffering(null)
     setProviderView({ status: 'loading' })
     try {
-      const [provider, services] = await Promise.all([
+      const [provider, services, offerings] = await Promise.all([
         loadProviderProfile(providerId, controller.signal),
         loadProviderServices(providerId, controller.signal),
+        loadProviderOfferings(providerId, controller.signal),
       ])
-      setProviderView({ status: 'ready', provider, services })
+      setProviderView({ status: 'ready', provider, services, offerings })
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
       setProviderView({ status: 'error' })
@@ -347,6 +357,7 @@ export function MapView({ config }: MapViewProps) {
     searchSelectionRef.current = false
     providerProfileControllerRef.current?.abort()
     setProviderView(null)
+    setSelectedOffering(null)
     setPlaceProviders([])
     setProvidersStatus('ready')
     setSelectedPlace(null)
@@ -382,10 +393,19 @@ export function MapView({ config }: MapViewProps) {
         </div>
       )}
       {!searchActive && placesStatus === 'error' && <div className="places-status places-status-error" role="alert">Places are temporarily unavailable</div>}
-      {selectedPlace && providerView?.status === 'ready' && (
+      {selectedPlace && providerView?.status === 'ready' && selectedOffering && (
+        <AvailabilityPanel
+          offering={selectedOffering}
+          onBack={() => setSelectedOffering(null)}
+          onClose={closeDetails}
+        />
+      )}
+      {selectedPlace && providerView?.status === 'ready' && !selectedOffering && (
         <ProviderProfilePanel
           provider={providerView.provider}
           services={providerView.services}
+          offerings={providerView.offerings}
+          onViewAvailability={setSelectedOffering}
           onBack={() => setProviderView(null)}
           onClose={closeDetails}
         />

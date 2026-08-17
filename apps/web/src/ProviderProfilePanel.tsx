@@ -1,9 +1,12 @@
+import type { BookableOffering } from './availability'
 import type { ProviderProfile, ProviderService } from './providers'
 import { serviceCategoryLabel } from './providers'
 
 type ProviderProfilePanelProps = {
   provider: ProviderProfile
   services: ProviderService[]
+  offerings: BookableOffering[]
+  onViewAvailability: (offering: BookableOffering) => void
   onBack: () => void
   onClose: () => void
 }
@@ -11,6 +14,8 @@ type ProviderProfilePanelProps = {
 export function ProviderProfilePanel({
   provider,
   services,
+  offerings,
+  onViewAvailability,
   onBack,
   onClose,
 }: ProviderProfilePanelProps) {
@@ -61,6 +66,24 @@ export function ProviderProfilePanel({
                         {service.price_amount && service.duration_minutes ? ' · ' : ''}
                         {service.duration_minutes ? `${service.duration_minutes} min` : ''}
                       </small>
+                    )}
+                    {offerings.filter((offering) => (
+                      offering.provider_service_id === service.provider_service_id
+                    )).map((offering) => (
+                      <button
+                        key={offering.id}
+                        className="availability-link"
+                        type="button"
+                        onClick={() => onViewAvailability(offering)}
+                      >
+                        View availability
+                        <small>{offering.place_name}</small>
+                      </button>
+                    ))}
+                    {!offerings.some((offering) => (
+                      offering.provider_service_id === service.provider_service_id
+                    )) && (
+                      <small className="availability-unconfigured">No schedule configured</small>
                     )}
                   </li>
                 ))}

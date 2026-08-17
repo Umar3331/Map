@@ -64,6 +64,7 @@ class FakeProvidersRepository:
         return [
             {
                 "id": 1,
+                "provider_service_id": 31,
                 "code": "gym_membership",
                 "name": "Gym membership",
                 "category": "fitness",
@@ -75,6 +76,7 @@ class FakeProvidersRepository:
             },
             {
                 "id": 2,
+                "provider_service_id": 32,
                 "code": "group_fitness",
                 "name": "Group fitness",
                 "category": "fitness",

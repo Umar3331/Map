@@ -1,9 +1,10 @@
 # Map
 
 Map is a local-first location and services discovery platform currently focused on Vilnius. Its
-implemented flow is **map → browse places → search/discovery → place details → provider/services**. The longer-term
-direction is **need → discovery → provider/service comparison → availability → booking/action**;
-provider comparison, availability, and booking are not implemented yet.
+implemented flow is **map → browse places → search/discovery → place details → provider/services
+→ demo availability**. The longer-term direction is **need → discovery → provider/service comparison
+→ availability → booking/action**; real provider schedules, booking, and provider comparison are not
+implemented yet.
 
 ## Current capabilities
 
@@ -13,6 +14,8 @@ provider comparison, availability, and booking are not implemented yet.
 - Local PostgreSQL-backed exact, prefix, fuzzy, category-intent, and controlled service-intent search.
 - Search-result map mode that focuses discovery while preserving normal place browsing when cleared.
 - Provider profiles with physical locations, normalized service offerings, and source provenance.
+- Location- and service-specific demo availability with weekly rules, exceptions, and Vilnius-aware
+  slot generation.
 - Fully local runtime after the source data has been downloaded and imported.
 
 ## Project status
@@ -20,8 +23,9 @@ provider comparison, availability, and booking are not implemented yet.
 - **Complete:** Milestone 1 (Vilnius PWA foundation), Milestone 1.1 (self-hosted basemap), Milestone 2
   (places/local businesses), Milestone 3 (search/discovery), and Milestone 4 (service-provider
   profiles and controlled service discovery).
-- **Next:** Milestone 5 — availability/booking foundation. Availability and booking are not yet
-  implemented.
+- **Complete:** Milestone 5 — read-only availability foundation using clearly labelled development
+  fixtures, including physical-iPhone acceptance.
+- **Next:** Milestone 6 — routing/navigation evaluation. Booking is not implemented.
 
 See the [full roadmap](docs/ROADMAP.md) for the remaining direction and sequencing.
 
@@ -45,12 +49,14 @@ flowchart TB
         APP["app.places<br/>application-owned place/search domain"]
         PROVIDERS["app.providers + provider_locations<br/>durable business/location domain"]
         SERVICES["app.service_types + provider_services<br/>normalized offerings"]
+        AVAILABILITY["app.bookable_offerings + availability rules<br/>demo scheduling domain"]
         OSM["osm.*<br/>basemap/import geography"]
     end
 
     A --> APP
     A --> PROVIDERS
     PROVIDERS --> SERVICES
+    SERVICES --> AVAILABILITY
     PROVIDERS --> APP
     M --> OSM
     APP --> S["PostgreSQL place/service search"]
@@ -78,6 +84,7 @@ Copy-Item .env.example .env
 .\scripts\map-data.ps1
 .\scripts\places-data.ps1
 .\scripts\provider-data.ps1
+.\scripts\availability-data.ps1
 .\scripts\start.ps1
 .\scripts\health.ps1
 ```
@@ -86,7 +93,8 @@ Open `http://localhost:5173`. The start script also prints the active LAN URL an
 URL. Stop with `.\scripts\stop.ps1`. See [Windows setup](docs/WINDOWS_SETUP.md),
 [local development](docs/LOCAL_DEVELOPMENT.md), and [iPhone installation](docs/IPHONE_INSTALLATION.md).
 Place browsing and search are available after `.\scripts\places-data.ps1` completes. Provider and
-service profiles are seeded by `.\scripts\provider-data.ps1`. Acceptance for Milestones 1 through 4
+service profiles are seeded by `.\scripts\provider-data.ps1`; deterministic demo schedules are
+seeded by `.\scripts\availability-data.ps1`. Acceptance for Milestones 1 through 5
 is recorded in
 [the acceptance checklist](docs/ACCEPTANCE.md).
 
@@ -128,8 +136,16 @@ offerings. The repeatable local seed conservatively creates one provider for eac
 service-oriented OSM place, links it through `app.provider_locations`, and assigns only curated
 taxonomy-backed services. Place details show a compact provider summary; opening it reuses the
 responsive desktop card/mobile bottom sheet for profile, service, location, and provenance data.
-No prices, durations, availability, booking, claims, or provider accounts are inferred. See
+No prices, real availability, booking, claims, or provider accounts are inferred. See
 [provider data and behavior](docs/PROVIDERS.md).
+
+## Demo availability
+
+Milestone 5 adds location-specific, service-specific bookable offerings and dynamically generates
+read-only slots from recurring local-time rules plus date exceptions. The seed covers five
+representative providers and is explicitly labelled development data; it is not sourced from or
+claimed by those businesses. The UI can inspect and select a slot, but it never creates a booking.
+See [availability semantics and API](docs/AVAILABILITY.md).
 
 ## Repository
 
@@ -148,6 +164,7 @@ No prices, durations, availability, booking, claims, or provider accounts are in
 - [Place data and provenance](docs/PLACES_DATA.md)
 - [Search](docs/SEARCH.md)
 - [Providers and services](docs/PROVIDERS.md)
+- [Availability](docs/AVAILABILITY.md)
 - [Local development](docs/LOCAL_DEVELOPMENT.md)
 - [iPhone installation](docs/IPHONE_INSTALLATION.md)
 

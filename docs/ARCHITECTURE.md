@@ -131,8 +131,22 @@ FastAPI exposes provider details, provider services, and compact providers for a
 shows the compact provider link in place details, then loads the provider profile and services into
 the existing responsive panel/bottom sheet. Controlled service aliases return provider-location
 results with the matching service label and open that same profile directly. General provider/service
-full-text search and all management, verification, availability, booking, and payment workflows
-remain deferred.
+full-text search and all management, verification, booking, and payment workflows remain deferred.
+
+## Availability foundation
+
+Availability belongs to `app.bookable_offerings`, which binds one active provider service to one
+active provider location. `app.availability_rules` stores recurring weekday windows in local
+business time. Date-specific closed or override records take precedence, with override windows kept
+in `app.availability_exception_windows`. These tables never duplicate place geometry or provider
+identity.
+
+FastAPI reads one offering, its applicable rules, and its exceptions, then generates a bounded
+maximum of 31 days of slots dynamically. Rules use `Europe/Vilnius`; returned local timestamps carry
+their actual offset and each slot also includes a UTC instant. Timezone conversion rejects
+nonexistent spring-forward wall times and resolves ambiguous autumn times deterministically.
+Opening hours are not treated as availability. The current five offerings and schedules are
+explicit development fixtures, and the API is read-only.
 
 ## Configuration and persistence
 

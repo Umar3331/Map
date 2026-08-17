@@ -179,3 +179,14 @@ unsupported services return an empty service result instead of falling back to n
 **Consequences:** Search remains local and deterministic, service results explain why they matched,
 and selection reuses the existing map and provider profile. The alias catalogue is intentionally
 small; general provider full-text search and service inference remain deferred.
+
+## ADR-026 — Offering-specific local-time availability
+**Status:** Accepted. **Context:** A provider can offer different services and schedules at different
+locations, while OSM opening hours neither prove service availability nor provide trustworthy
+appointment data. **Decision:** Bind availability to a provider service at a provider location.
+Store recurring rules and date exceptions in `Europe/Vilnius` local business time, generate bounded
+slots dynamically, and return both timezone-aware local and UTC instants. Seed only conspicuously
+labelled development fixtures and expose read-only APIs. **Consequences:** DST behavior and exception
+precedence are explicit, infinite slot materialization is avoided, and future branch-specific
+scheduling remains possible. Real schedules, resources, authentication, reservations, overlap
+enforcement, notifications, and booking writes remain separate future work.

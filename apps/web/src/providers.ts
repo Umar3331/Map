@@ -42,6 +42,7 @@ export type ProviderProfile = {
 
 export type ProviderService = {
   id: number
+  provider_service_id: number
   code: string
   name: string
   category: string

@@ -37,6 +37,25 @@ if (-not $Provider.display_name -or $Provider.locations.Count -lt 1 -or $Provide
     -or $Services.meta.returned -lt 1) {
     throw 'Map provider profile or services returned unexpected data.'
 }
+$AvailabilityPlace = (Invoke-RestMethod `
+    -Uri "http://${HostName}:${Port}/api/v1/search?q=12Boksas&limit=1" -TimeoutSec 10).results[0]
+$AvailabilityProvider = (Invoke-RestMethod `
+    -Uri "http://${HostName}:${Port}/api/v1/places/$($AvailabilityPlace.place_id)/providers" `
+    -TimeoutSec 10).providers[0]
+$Offerings = Invoke-RestMethod `
+    -Uri "http://${HostName}:${Port}/api/v1/providers/$($AvailabilityProvider.id)/offerings" `
+    -TimeoutSec 10
+if ($Offerings.meta.returned -lt 1 -or -not $Offerings.offerings[0].is_demo) {
+    throw 'Map availability offering endpoint returned unexpected data. Run .\scripts\availability-data.ps1 first.'
+}
+$Availability = Invoke-RestMethod `
+    -Uri "http://${HostName}:${Port}/api/v1/offerings/$($Offerings.offerings[0].id)/availability?from=2026-08-24&to=2026-08-25" `
+    -TimeoutSec 10
+if ($Availability.timezone -ne 'Europe/Vilnius' -or $Availability.days.Count -ne 2 `
+    -or $Availability.days[0].status -ne 'closed' -or $Availability.days[0].slots.Count -ne 0 `
+    -or $Availability.days[1].status -ne 'override' -or $Availability.days[1].slots.Count -lt 1) {
+    throw 'Map availability slot endpoint returned unexpected data.'
+}
 $Health | ConvertTo-Json
 $Config | ConvertTo-Json -Depth 4
-Write-Host "PWA gateway, API health, Vilnius configuration, places, search, and provider checks passed ($($Places.features.Count) places)." -ForegroundColor Green
+Write-Host "PWA gateway, API health, Vilnius configuration, places, search, provider, and availability checks passed ($($Places.features.Count) places)." -ForegroundColor Green

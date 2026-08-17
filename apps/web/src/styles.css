@@ -319,6 +319,72 @@ button, input { font: inherit; }
 }
 .service-group li span, .provider-locations li span { color: #6a8079; font-size: 12px; }
 .service-group li small { color: #397261; }
+.availability-link {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid #b9d7cc;
+  border-radius: 11px;
+  color: #176d59;
+  background: #fff;
+  font-weight: 750;
+  text-align: left;
+  cursor: pointer;
+}
+.availability-link small { color: #668077; font-weight: 550; }
+.availability-unconfigured { margin-top: 4px; color: #7b8b86 !important; }
+.availability-location { margin: 5px 0 0; color: #58736a; font-size: 13px; }
+.availability-demo {
+  margin: 14px 0 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  color: #715b22;
+  background: #fff7d8;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.availability-state, .availability-empty { margin: 20px 0 0; color: #668077; }
+.availability-error { color: #873e34; }
+.availability-dates {
+  display: flex;
+  gap: 7px;
+  margin: 18px -4px 0;
+  padding: 0 4px 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.availability-date {
+  min-width: 64px;
+  min-height: 58px;
+  padding: 8px 7px;
+  border: 1px solid #d6e3dd;
+  border-radius: 12px;
+  color: #58736a;
+  background: #f7faf8;
+  cursor: pointer;
+}
+.availability-date span, .availability-date strong { display: block; }
+.availability-date span { font-size: 11px; text-transform: uppercase; }
+.availability-date strong { margin-top: 3px; font-size: 13px; }
+.availability-date-selected { border-color: #31866f; color: #fff; background: #31866f; }
+.availability-slots { margin-top: 16px; }
+.availability-slots h2 { margin: 0 0 10px; color: #24483e; font-size: 15px; }
+.availability-slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.availability-slot {
+  min-height: 46px;
+  border: 1px solid #b9d7cc;
+  border-radius: 11px;
+  color: #176d59;
+  background: #f6faf8;
+  font-weight: 750;
+  cursor: pointer;
+}
+.availability-slot-selected { color: #fff; background: #176d59; }
+.availability-selection { margin: 14px 0 0; color: #31564a; font-size: 12px; line-height: 1.4; }
 .provider-profile-state { display: grid; gap: 18px; align-content: start; }
 .provider-profile-state p { margin: 0; color: #49665d; }
 

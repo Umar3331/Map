@@ -102,5 +102,7 @@ about 2–4 ms locally.
 - Initial providers are source-place identities, not resolved legal companies or grouped brands.
 - OSM contact fields can be incomplete or stale; profiles are explicitly unverified.
 - Service assignments are curated taxonomy mappings, not provider-authored catalogues.
-- No provider editing, claiming, verification, account, availability, calendar, booking, payment,
-  review, rating, or recommendation workflow exists.
+- No provider editing, claiming, verification, account, real schedule management, calendar,
+  booking, payment, review, rating, or recommendation workflow exists. Milestone 5 adds only
+  read-only, explicitly demo availability for selected provider offerings; see
+  `docs/AVAILABILITY.md`.
