@@ -38,6 +38,7 @@ it('loads provider profile and services without requiring commercial data', asyn
       provider_id: 21,
       services: [{
         id: 1,
+        provider_service_id: 31,
         code: 'gym_membership',
         name: 'Gym membership',
         category: 'fitness',

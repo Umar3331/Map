@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 
 import { ProviderProfilePanel } from './ProviderProfilePanel'
+import type { BookableOffering } from './availability'
 import type { ProviderProfile, ProviderService } from './providers'
 
 const provider: ProviderProfile = {
@@ -36,6 +37,7 @@ const provider: ProviderProfile = {
 
 const services: ProviderService[] = [{
   id: 1,
+  provider_service_id: 31,
   code: 'gym_membership',
   name: 'Gym membership',
   category: 'fitness',
@@ -46,11 +48,37 @@ const services: ProviderService[] = [{
   duration_minutes: null,
 }]
 
+const offerings: BookableOffering[] = [{
+  id: 51,
+  provider_service_id: 31,
+  provider_location_id: 41,
+  duration_minutes: 60,
+  slot_interval_minutes: 30,
+  capacity: 1,
+  timezone: 'Europe/Vilnius',
+  is_demo: true,
+  service_code: 'gym_membership',
+  service_name: 'Gym membership',
+  service_category: 'fitness',
+  place_id: 11,
+  place_name: 'Lemon Gym Konstitucijos',
+  address_line: 'Konstitucijos pr. 7A',
+  city: 'Vilnius',
+}]
+
 it('renders services, locations, and available provider fields', () => {
   const onBack = vi.fn()
   const onClose = vi.fn()
+  const onViewAvailability = vi.fn()
   render(
-    <ProviderProfilePanel provider={provider} services={services} onBack={onBack} onClose={onClose} />,
+    <ProviderProfilePanel
+      provider={provider}
+      services={services}
+      offerings={offerings}
+      onViewAvailability={onViewAvailability}
+      onBack={onBack}
+      onClose={onClose}
+    />,
   )
 
   const dialog = screen.getByRole('dialog', { name: 'Provider profile' })
@@ -58,10 +86,12 @@ it('renders services, locations, and available provider fields', () => {
   expect(dialog).toHaveTextContent('Gym membership')
   expect(dialog).toHaveTextContent('Konstitucijos pr. 7A, Vilnius')
   expect(dialog).not.toHaveTextContent('min')
+  fireEvent.click(screen.getByRole('button', { name: /View availability/ }))
   fireEvent.click(screen.getByRole('button', { name: 'Back to place details' }))
   fireEvent.click(screen.getByRole('button', { name: 'Close provider profile' }))
   expect(onBack).toHaveBeenCalledOnce()
   expect(onClose).toHaveBeenCalledOnce()
+  expect(onViewAvailability).toHaveBeenCalledWith(offerings[0])
 })
 
 it('omits missing optional fields and handles no services', () => {
@@ -69,6 +99,8 @@ it('omits missing optional fields and handles no services', () => {
     <ProviderProfilePanel
       provider={{ ...provider, description: null, phone: null, website: null, locations: [] }}
       services={[]}
+      offerings={[]}
+      onViewAvailability={() => undefined}
       onBack={() => undefined}
       onClose={() => undefined}
     />,
@@ -77,4 +109,18 @@ it('omits missing optional fields and handles no services', () => {
   expect(screen.queryByText('Website')).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Services' })).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Locations' })).not.toBeInTheDocument()
+})
+
+it('marks a service without availability configuration honestly', () => {
+  render(
+    <ProviderProfilePanel
+      provider={provider}
+      services={services}
+      offerings={[]}
+      onViewAvailability={() => undefined}
+      onBack={() => undefined}
+      onClose={() => undefined}
+    />,
+  )
+  expect(screen.getByText('No schedule configured')).toBeInTheDocument()
 })

@@ -144,6 +144,7 @@ class PostgresProvidersRepository:
         services_query = """
             SELECT
                 service_type.id,
+                offering.id AS provider_service_id,
                 service_type.code,
                 service_type.name,
                 service_type.category,

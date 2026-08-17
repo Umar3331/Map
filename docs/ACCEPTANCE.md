@@ -151,3 +151,21 @@ Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
   brand/category search; responsive bottom sheets; trusted HTTPS; and installed-PWA behavior.
 
 Milestone 4 physical-iPhone re-acceptance passed on 2026-08-17.
+
+## Milestone 5 draft acceptance
+
+- [x] Availability is attached to a provider service at a provider location through a constrained
+  bookable offering, not directly to a provider, service type, or place.
+- [x] Weekly local-time rules support multiple windows; closed and override exceptions take
+  precedence for one local date.
+- [x] Five explicitly labelled development offerings seed idempotently with 33 weekly rules, four
+  exceptions, and two override windows. No fixture is represented as real business availability.
+- [x] Dynamic slot generation respects duration, interval, capacity, the 31-day range bound, and
+  active provider/service/location state without pre-materializing future slots.
+- [x] Europe/Vilnius winter, summer, spring-forward, and autumn-fallback behavior passes automated
+  tests with offset-aware local and UTC timestamps.
+- [x] Provider profiles expose configured availability while services without fixtures honestly
+  report that no schedule is configured.
+- [x] Date switching, closed/no-schedule/no-availability states, slot-only visual selection, and
+  back/close behavior pass frontend tests; no booking write is exposed.
+- [ ] Physical-iPhone availability acceptance remains for the user after draft PR review.

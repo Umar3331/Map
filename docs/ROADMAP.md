@@ -25,7 +25,10 @@ No milestone has an arbitrary date.
    implemented. Controlled service-intent discovery connects normalized offerings to the existing
    search/map/profile flow. Automated, Windows production-browser, and physical-iPhone
    re-acceptance passed on 2026-08-17.
-6. **Milestone 5 — Availability/booking foundation.** Evaluate availability semantics and actions.
+6. **Milestone 5 — Availability foundation (in progress).** Location-specific offerings, recurring
+   rules, date exceptions, Europe/Vilnius-aware dynamic slots, deterministic demo schedules,
+   read-only APIs, and responsive availability UI are implemented for draft acceptance. No booking
+   write, real provider schedule, account, staff, or resource calendar is included.
 7. **Milestone 6 — Routing/navigation evaluation.** Assess needs and open data/tooling.
 8. **Milestone 7 — AI natural-language geographic queries.** Add grounded query interpretation.
 9. **Milestone 8 — Accounts/authentication.** Introduce identity only when workflows require it.

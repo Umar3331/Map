@@ -146,3 +146,18 @@ updates provider identity, exact provider-to-place links, normalized service ass
 provenance, and import metrics. Running it repeatedly is safe and must preserve provider, location,
 and assignment counts. It does not group repeated brands by name and does not invent price or
 duration data. See `docs/PROVIDERS.md` for the model, mappings, API, and limitations.
+
+## Development availability data
+
+Install the availability schema and its deterministic demo schedules after provider data:
+
+```powershell
+.\scripts\availability-data.ps1
+.\scripts\validate-availability.ps1
+```
+
+The seed is safe to repeat. It creates five clearly marked development offerings with weekly rules
+and date exceptions; it does not import or infer real provider schedules or OSM opening hours.
+Provider profiles show **View availability** only for configured provider-service/location
+combinations. The read-only API supports one date or an inclusive range of at most 31 days. See
+`docs/AVAILABILITY.md` for timezone semantics, the response contract, and limitations.

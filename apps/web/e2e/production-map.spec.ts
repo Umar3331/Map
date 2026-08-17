@@ -539,3 +539,105 @@ test('provider profile is usable in an iPhone-sized bottom sheet', async ({ page
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   expect(runtimeErrors).toEqual([])
 })
+
+test('desktop provider services expose deterministic demo availability without booking writes', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  const runtimeUrls: string[] = []
+  const availabilityRequests: Array<{ method: string; url: string }> = []
+  page.on('request', (request) => {
+    if (/^https?:/.test(request.url())) runtimeUrls.push(request.url())
+    if (/\/availability(?:\?|$)/.test(request.url())) {
+      availabilityRequests.push({ method: request.method(), url: request.url() })
+    }
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/', { waitUntil: 'load' })
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  await input.fill('12Boksas')
+  await expect(page.getByRole('option').first()).toContainText('12Boksas')
+  await page.getByRole('option').first().click()
+  const placePanel = page.getByRole('dialog', { name: 'Place details' })
+  await placePanel.locator('.provider-summary').first().click()
+  const providerPanel = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(providerPanel.getByText('Vehicle repair')).toBeVisible()
+  await providerPanel.getByRole('button', { name: /View availability/ }).click()
+
+  const availabilityPanel = page.getByRole('dialog', { name: 'Service availability' })
+  await expect(availabilityPanel.getByRole('heading', { name: 'Vehicle repair' })).toBeVisible()
+  await expect(availabilityPanel.getByText(/Demo schedule/)).toBeVisible()
+  await expect(availabilityPanel.getByRole('button', { name: '09:00' })).toBeVisible()
+  await availabilityPanel.getByRole('button', { name: '09:00' }).click()
+  await expect(availabilityPanel.getByText(/No booking has been created/)).toBeVisible()
+  await availabilityPanel.getByRole('listitem', { name: 'Sun Aug 23' }).click()
+  await expect(availabilityPanel.getByText('Closed')).toBeVisible()
+
+  const repairScreenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-availability-vehicle-repair-desktop.png'),
+  })
+  expect(repairScreenshot.byteLength).toBeGreaterThan(50_000)
+  await page.getByRole('button', { name: 'Back to provider profile' }).click()
+  await expect(providerPanel).toBeVisible()
+  await page.getByRole('button', { name: 'Close provider profile' }).click()
+  await page.getByRole('button', { name: 'Clear search' }).click()
+
+  await input.fill('712 Barbershop')
+  await expect(page.getByRole('option').first()).toContainText('712 Barbershop')
+  await page.getByRole('option').first().click()
+  const haircutPlace = page.getByRole('dialog', { name: 'Place details' })
+  await haircutPlace.locator('.provider-summary').first().click()
+  const haircutProvider = page.getByRole('dialog', { name: 'Provider profile' })
+  await haircutProvider.getByRole('button', { name: /View availability/ }).click()
+  const haircutAvailability = page.getByRole('dialog', { name: 'Service availability' })
+  await expect(haircutAvailability.getByRole('heading', { name: 'Haircut' })).toBeVisible()
+  await haircutAvailability.getByRole('listitem', { name: 'Sat Aug 22' }).click()
+  await expect(haircutAvailability.getByText('Closed')).toBeVisible()
+
+  expect(availabilityRequests.length).toBeGreaterThanOrEqual(2)
+  expect(availabilityRequests.every((request) => request.method === 'GET')).toBe(true)
+  expect(runtimeUrls.some((url) => /booking|reservation/i.test(url))).toBe(false)
+  expect(runtimeErrors).toEqual([])
+  const origin = new URL(page.url()).origin
+  expect([...new Set(runtimeUrls.map((url) => new URL(url).origin))]).toEqual([origin])
+})
+
+test('availability is touch friendly in the iPhone-sized provider sheet', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/', { waitUntil: 'load' })
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+  await input.fill('12Boksas')
+  await page.getByRole('option').first().click()
+  await page.getByRole('dialog', { name: 'Place details' }).locator('.provider-summary').first().click()
+  await page.getByRole('dialog', { name: 'Provider profile' })
+    .getByRole('button', { name: /View availability/ }).click()
+
+  const panel = page.getByRole('dialog', { name: 'Service availability' })
+  await expect(panel.getByRole('button', { name: '09:00' })).toBeVisible()
+  const slotBox = await panel.getByRole('button', { name: '09:00' }).boundingBox()
+  if (!slotBox) throw new Error('Mobile availability slot has no rendered bounds')
+  expect(slotBox.height).toBeGreaterThanOrEqual(44)
+  await panel.getByRole('button', { name: '09:00' }).click()
+  await expect(panel.getByText(/No booking has been created/)).toBeVisible()
+  const panelBox = await panel.boundingBox()
+  if (!panelBox) throw new Error('Mobile availability panel has no rendered bounds')
+  expect(panelBox.x).toBeGreaterThanOrEqual(0)
+  expect(panelBox.x + panelBox.width).toBeLessThanOrEqual(390)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+
+  const screenshot = await page.screenshot({
+    path: testInfo.outputPath('vilnius-availability-mobile.png'),
+  })
+  expect(screenshot.byteLength).toBeGreaterThan(50_000)
+  await page.getByRole('button', { name: 'Back to provider profile' }).click()
+  await expect(page.getByRole('dialog', { name: 'Provider profile' })).toBeVisible()
+  expect(runtimeErrors).toEqual([])
+})
