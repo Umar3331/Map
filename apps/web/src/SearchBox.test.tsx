@@ -2,9 +2,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { SearchBox } from './SearchBox'
+import type { SearchResult } from './search'
 
 const maxima = {
   id: 1080,
+  result_type: 'place' as const,
+  provider_id: null,
+  place_id: 1080,
   name: 'Maxima',
   category: 'shopping' as const,
   subcategory: 'supermarket',
@@ -12,17 +16,37 @@ const maxima = {
   longitude: 25.28,
   address_line: 'Gedimino pr. 18',
   distance_m: 240,
+  matched_service: null,
 }
 
-const rimi = { ...maxima, id: 1081, name: 'Rimi', distance_m: 480 }
+const rimi = { ...maxima, id: 1081, place_id: 1081, name: 'Rimi', distance_m: 480 }
 
-function response(results = [maxima]) {
+const repairProvider = {
+  id: 220,
+  result_type: 'provider_service' as const,
+  provider_id: 120,
+  place_id: 220,
+  name: '12Boksas',
+  place_name: '12Boksas',
+  category: 'automotive' as const,
+  subcategory: 'car_repair',
+  latitude: 54.68,
+  longitude: 25.27,
+  address_line: 'Test g. 12',
+  distance_m: 300,
+  matched_service: { code: 'vehicle_repair', name: 'Vehicle repair' },
+}
+
+function response(
+  results: SearchResult[] = [maxima],
+  intent: 'name' | 'category' | 'service' = 'name',
+) {
   return Promise.resolve({
     ok: true,
     json: async () => ({
       query: 'maxima',
       results,
-      meta: { returned: results.length, intent: 'name' },
+      meta: { returned: results.length, intent },
     }),
   })
 }
@@ -117,7 +141,7 @@ it('publishes only current results to map search mode and clears stale map resul
 
 it('renders loading, empty, error, and clear states without breaking the search control', async () => {
   const fetchMock = vi.fn()
-    .mockImplementationOnce(() => response([]))
+    .mockImplementationOnce(() => response([], 'service'))
     .mockRejectedValueOnce(new Error('offline'))
   vi.stubGlobal('fetch', fetchMock)
   const { input, onClear } = renderSearch()
@@ -126,7 +150,7 @@ it('renders loading, empty, error, and clear states without breaking the search 
   fireEvent.change(input, { target: { value: 'nothing' } })
   expect(screen.getByText('Searching…')).toBeInTheDocument()
   await finishDebounce()
-  expect(screen.getByText('No places found')).toBeInTheDocument()
+  expect(screen.getByText('No service providers found')).toBeInTheDocument()
 
   fireEvent.change(input, { target: { value: 'failure' } })
   await finishDebounce()
@@ -137,6 +161,21 @@ it('renders loading, empty, error, and clear states without breaking the search 
   expect(input).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByLabelText('Search results')).not.toBeInTheDocument()
   expect(onClear).toHaveBeenCalledOnce()
+})
+
+it('labels service results and selects the provider location result', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(() => response([repairProvider], 'service')))
+  const onSelect = vi.fn()
+  const { input } = renderSearch(onSelect)
+
+  fireEvent.focus(input)
+  fireEvent.change(input, { target: { value: 'car repair' } })
+  await finishDebounce()
+  const option = screen.getByRole('option', { name: /12Boksas/ })
+  expect(option).toHaveAttribute('data-result-type', 'provider_service')
+  expect(option).toHaveTextContent('Vehicle repair · Service provider')
+  fireEvent.click(option)
+  expect(onSelect).toHaveBeenCalledWith(repairProvider)
 })
 
 it('supports arrow keys, Enter selection, Escape, and result callbacks', async () => {

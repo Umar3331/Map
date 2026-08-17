@@ -43,11 +43,11 @@ $Expectations = @(
     @{ Query = 'cafe'; Subcategory = 'cafe' },
     @{ Query = 'restaurant'; Subcategory = 'restaurant' },
     @{ Query = 'pharmacy'; Subcategory = 'pharmacy' },
-    @{ Query = 'gym'; Subcategory = 'fitness_centre' },
+    @{ Query = 'gym'; Service = @('gym_membership', 'group_fitness') },
     @{ Query = 'hotel'; Subcategory = 'hotel' },
     @{ Query = 'bank'; Subcategory = 'bank' },
     @{ Query = 'supermarket'; Subcategory = 'supermarket' },
-    @{ Query = 'car repair'; Subcategory = 'car_repair' },
+    @{ Query = 'car repair'; Service = @('vehicle_repair') },
     @{ Query = 'maxma'; Match = { param($Item) $Item.name -match 'Maxima' } },
     @{ Query = 'resturant'; Match = { param($Item) $Item.subcategory -eq 'restaurant' } },
     @{ Query = 'pharmcy'; Match = { param($Item) $Item.subcategory -eq 'pharmacy' } }
@@ -57,7 +57,18 @@ foreach ($Expectation in $Expectations) {
     $Response = Invoke-MapSearch -Query $Expectation.Query
     if ($Response.results.Count -eq 0) { throw "Search returned no results for '$($Expectation.Query)'." }
     $Match = $Expectation.Match
-    if ($Expectation.Subcategory) {
+    if ($Expectation.Service) {
+        if ($Response.meta.intent -ne 'service') {
+            throw "Service intent was not reported for '$($Expectation.Query)'."
+        }
+        $ServiceCodes = @($Expectation.Service)
+        $Irrelevant = @($Response.results | Where-Object {
+            $_.result_type -ne 'provider_service' -or $_.matched_service.code -notin $ServiceCodes
+        })
+        if ($Irrelevant.Count -gt 0) {
+            throw "Service search returned an unrelated result for '$($Expectation.Query)'."
+        }
+    } elseif ($Expectation.Subcategory) {
         if ($Response.meta.intent -ne 'category') {
             throw "Category intent was not reported for '$($Expectation.Query)'."
         }
@@ -75,9 +86,9 @@ $Exact = Invoke-MapSearch -Query 'Maxima'
 if ($Exact.results[0].name -ne 'Maxima') { throw 'Exact Maxima match was not ranked first.' }
 $Prefix = Invoke-MapSearch -Query 'Rim'
 if ($Prefix.results[0].name -notmatch 'Rimi') { throw 'Rimi prefix ranking failed.' }
-$Gym = Invoke-MapSearch -Query 'gym'
+$Gym = Invoke-MapSearch -Query 'gym' -Limit 25
 if (@($Gym.results | Where-Object { $_.name -notmatch 'gym' }).Count -eq 0) {
-    throw 'Gym discovery did not include a taxonomy match without gym in its name.'
+    throw 'Gym service discovery did not include a provider match without gym in its name.'
 }
 $GymBrand = Invoke-MapSearch -Query 'Gym+'
 if ($GymBrand.meta.intent -ne 'name' -or $GymBrand.results[0].name -ne 'Gym+') {
@@ -87,5 +98,18 @@ $LemonGym = Invoke-MapSearch -Query 'Lemon Gym'
 if ($LemonGym.meta.intent -ne 'name' -or $LemonGym.results[0].name -notmatch 'Lemon Gym') {
     throw 'Lemon Gym brand ranking failed.'
 }
+$Spa = Invoke-MapSearch -Query 'spa'
+if ($Spa.meta.intent -ne 'service' -or $Spa.results.Count -eq 0) {
+    throw 'Spa was not recognized as service intent with trusted provider matches.'
+}
+if (@($Spa.results | Where-Object {
+    $_.matched_service.code -ne 'massage' -or $_.name -match 'Lietuvos spauda|Spartuko kebabai'
+}).Count -gt 0) {
+    throw 'Spa service discovery returned a non-massage or place-name substring false positive.'
+}
+$UnsupportedService = Invoke-MapSearch -Query 'personal training'
+if ($UnsupportedService.meta.intent -ne 'service' -or $UnsupportedService.results.Count -ne 0) {
+    throw 'Unsupported service intent did not return an honest empty result.'
+}
 
-Write-Host 'Live Vilnius intent-aware search quality and index validation passed (16 queries).' -ForegroundColor Green
+Write-Host 'Live Vilnius place, category, and service-intent search quality validation passed (18 queries).' -ForegroundColor Green

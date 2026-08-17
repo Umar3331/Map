@@ -8,19 +8,24 @@ export type SearchContext = {
 
 export type SearchResult = {
   id: number
+  result_type: 'place' | 'provider_service'
+  provider_id: number | null
+  place_id: number
   name: string
+  place_name?: string
   category: PlaceCategory
   subcategory: string
   latitude: number
   longitude: number
   address_line: string | null
   distance_m: number | null
+  matched_service: { code: string; name: string } | null
 }
 
 export type SearchResponse = {
   query: string
   results: SearchResult[]
-  meta: { returned: number; intent: 'name' | 'category' }
+  meta: { returned: number; intent: 'name' | 'category' | 'service' }
 }
 
 export function buildSearchUrl(query: string, context?: SearchContext | null, limit = 10): string {
@@ -44,7 +49,11 @@ function isSearchResponse(value: unknown): value is SearchResponse {
     && candidate.meta !== undefined
     && Number.isInteger(candidate.meta.returned)
     && candidate.meta.returned === candidate.results.length
-    && (candidate.meta.intent === 'name' || candidate.meta.intent === 'category')
+    && (
+      candidate.meta.intent === 'name'
+      || candidate.meta.intent === 'category'
+      || candidate.meta.intent === 'service'
+    )
 }
 
 export async function loadSearch(

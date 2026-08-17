@@ -92,12 +92,12 @@ zoom guidance. React renders only the details panel, never thousands of DOM mark
 
 ## Search and discovery
 
-`GET /api/v1/search` queries only active `app.places` rows. PostgreSQL performs normalized exact,
-prefix, substring, and `pg_trgm` similarity matching, with optional category filtering. A small API
-alias map converts common discovery terms such as `coffee`, `pharmacy`, and `car repair` into the
-existing Map category/subcategory taxonomy; it does not alter stored names or provenance.
+`GET /api/v1/search` uses three explicit intents. Place/brand and place-category intent query active
+`app.places` rows using normalized exact, prefix, substring, `pg_trgm`, and taxonomy matching.
+Recognized service intent instead joins active `service_types`, `provider_services`, `providers`,
+`provider_locations`, and `places`; it never treats an arbitrary place-name substring as a service.
 
-Ranking first classifies the normalized request as name or category intent. Ordinary names retain
+Ranking first classifies the normalized request as name, category, or service intent. Ordinary names retain
 exact, prefix, and trigram tiers before geographic signals. A recognized category alias instead
 uses its exact mapped category/subcategory as the candidate set, so a fitness centre need not contain
 `gym` in its name. Viewport and distance order equivalent taxonomy candidates. Meaningful brand
@@ -112,6 +112,27 @@ the bounded ranked set explicit without implying a total category count. Clear o
 the search source and restores normal viewport clustering. Selecting a result eases MapLibre to zoom
 16, highlights it in the search source, loads `/api/v1/places/{id}`, and opens the existing details
 UI. Search remains entirely inside the same-origin local chain: browser → Caddy → FastAPI → PostgreSQL.
+
+## Providers and services
+
+`app.places` remains the geographic POI boundary. `app.providers` holds durable business identity;
+`app.provider_locations` links a provider to one or more places without copying address or geometry.
+`app.service_types` is a small normalized catalogue, and `app.provider_services` records which types
+a provider offers. Nullable price and duration columns are structural only and remain empty unless a
+future trustworthy source supplies them.
+
+The initial local seed reads active `app.places` rows in selected service-oriented taxonomies. It
+uses the exact place source and external ID as provider provenance and creates one provider per source
+place. No fuzzy name grouping is performed: repeated brands can be resolved into multi-location
+providers later without risking false merges now. `app.provider_sources` retains source identity and
+links back to the originating place, while `app.provider_import_runs` records repeatable import counts.
+
+FastAPI exposes provider details, provider services, and compact providers for a place. The PWA first
+shows the compact provider link in place details, then loads the provider profile and services into
+the existing responsive panel/bottom sheet. Controlled service aliases return provider-location
+results with the matching service label and open that same profile directly. General provider/service
+full-text search and all management, verification, availability, booking, and payment workflows
+remain deferred.
 
 ## Configuration and persistence
 

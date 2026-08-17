@@ -22,6 +22,17 @@ it('validates search response metadata', async () => {
     json: async () => ({ ...payload, meta: { returned: 1, intent: 'name' } }),
   }))
   await expect(loadSearch('maxima')).rejects.toThrow('Search response is invalid')
+
+  const servicePayload = {
+    query: 'spa',
+    results: [],
+    meta: { returned: 0, intent: 'service' },
+  }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => servicePayload,
+  }))
+  await expect(loadSearch('spa')).resolves.toEqual(servicePayload)
 })
 
 it('formats nearby and city-scale distances without exposing nulls', () => {

@@ -27,6 +27,9 @@ function resultCollection(results: SearchResult[]) {
         name: result.name,
         category: result.category,
         subcategory: result.subcategory,
+        result_type: result.result_type,
+        provider_id: result.provider_id,
+        matched_service: result.matched_service?.code ?? null,
       },
     })),
   }

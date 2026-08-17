@@ -122,3 +122,32 @@ Milestone 2 physical-iPhone acceptance passed on 2026-08-17.
   ranking and MapLibre search-mode changes.
 
 Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
+
+## Milestone 4 acceptance
+
+- [x] Provider identity is separate from places, provider locations reference places, and services
+  use a normalized catalogue and provider-service join.
+- [x] Exact OSM/place source identity provides provenance; names are not used for unsafe brand merges.
+- [x] Two consecutive seeds are idempotent with no duplicate location or active service pairs.
+- [x] Foreign keys, inactive relationships, required names, provenance, and service-type validity pass
+  live database validation.
+- [x] No prices or durations are fabricated; all current commercial fields remain null.
+- [x] Read-only provider detail, place-provider, and provider-service APIs return bounded compact data.
+- [x] Place details show provider summaries and transition to the existing responsive provider panel.
+- [x] Provider profiles omit missing optional fields and render services and locations without fake
+  booking or empty price/time labels.
+- [x] Frontend lint, typecheck, unit tests, production build, backend lint/tests, Compose validation,
+  live database validation, health checks, and production Playwright tests pass.
+- [x] Desktop and 390-by-844 Windows production-browser checks pass with no horizontal overflow,
+  console errors, worker/MIME errors, or external runtime origins.
+- [x] Search distinguishes place/brand, place-category, and controlled service intent; service
+  results carry provider/location identity and the matched normalized service.
+- [x] `spa` returns only trusted massage-provider offerings and never `Lietuvos spauda` or
+  `Spartuko kebabai` because of a place-name substring.
+- [x] `car repair` returns vehicle-repair providers; selecting a service result focuses its location
+  and opens the existing provider profile on desktop and at 390 by 844.
+- [x] Physical-iPhone re-acceptance confirms service-aware `spa`, `car repair`, and `haircut`
+  discovery; direct provider-profile opening; place-detail Back behavior; search clearing; normal
+  brand/category search; responsive bottom sheets; trusted HTTPS; and installed-PWA behavior.
+
+Milestone 4 physical-iPhone re-acceptance passed on 2026-08-17.
