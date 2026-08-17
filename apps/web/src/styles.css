@@ -140,6 +140,7 @@ button, input { font: inherit; }
 .search-result span { display: block; }
 .search-result-name { overflow: hidden; font-size: 15px; font-weight: 730; text-overflow: ellipsis; white-space: nowrap; }
 .search-result-meta { margin-top: 3px; color: #416358; font-size: 12px; font-weight: 650; }
+.search-result-service { color: #24715c; font-weight: 750; }
 .search-result-detail { margin-top: 3px; overflow: hidden; color: #74867f; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 
 .search-icon {

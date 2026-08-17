@@ -17,6 +17,7 @@ type SearchBoxProps = {
 }
 
 type SearchStatus = 'idle' | 'short' | 'loading' | 'ready' | 'empty' | 'error'
+type SearchIntent = 'name' | 'category' | 'service'
 
 export function SearchBox({
   regionName,
@@ -32,6 +33,7 @@ export function SearchBox({
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [open, setOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [intent, setIntent] = useState<SearchIntent>('name')
 
   useEffect(() => {
     if (!open) return
@@ -44,6 +46,7 @@ export function SearchBox({
         .then((response) => {
           if (controller.signal.aborted) return
           setResults(response.results)
+          setIntent(response.meta.intent)
           onResultsChange(response.results)
           setActiveIndex(0)
           setStatus(response.results.length ? 'ready' : 'empty')
@@ -71,6 +74,7 @@ export function SearchBox({
     setQuery('')
     setResults([])
     setStatus('idle')
+    setIntent('name')
     setOpen(false)
     onResultsChange([])
     onClear()
@@ -154,7 +158,11 @@ export function SearchBox({
           )}
           {status === 'short' && <p className="search-message">Type at least 2 characters</p>}
           {status === 'loading' && <p className="search-message" role="status">Searching…</p>}
-          {status === 'empty' && <p className="search-message">No places found</p>}
+          {status === 'empty' && (
+            <p className="search-message">
+              {intent === 'service' ? 'No service providers found' : 'No places found'}
+            </p>
+          )}
           {status === 'error' && (
             <p className="search-message search-message-error" role="alert">
               Search is temporarily unavailable
@@ -171,15 +179,22 @@ export function SearchBox({
                     className={`search-result${index === activeIndex ? ' search-result-active' : ''}`}
                     type="button"
                     role="option"
+                    data-result-type={result.result_type}
                     aria-selected={index === activeIndex}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => chooseResult(result)}
                   >
                     <span className="search-result-name">{result.name}</span>
-                    <span className="search-result-meta">
-                      {placeSubcategoryLabel(result.subcategory)}
-                      {result.subcategory === result.category ? '' : ` · ${placeCategoryLabel(result.category)}`}
-                    </span>
+                    {result.result_type === 'provider_service' && result.matched_service ? (
+                      <span className="search-result-meta search-result-service">
+                        {result.matched_service.name} · Service provider
+                      </span>
+                    ) : (
+                      <span className="search-result-meta">
+                        {placeSubcategoryLabel(result.subcategory)}
+                        {result.subcategory === result.category ? '' : ` · ${placeCategoryLabel(result.category)}`}
+                      </span>
+                    )}
                     {(result.address_line || distance) && (
                       <span className="search-result-detail">
                         {[result.address_line, distance].filter(Boolean).join(' · ')}

@@ -10,7 +10,7 @@ provider comparison, availability, and booking are not implemented yet.
 - Installable React/TypeScript PWA validated on desktop and a physical iPhone.
 - Trusted local HTTPS and a fully self-hosted Vilnius vector basemap backed by local OSM/PostGIS data.
 - 4,724 application-owned places with category-aware browsing, clustering, and responsive details.
-- Local PostgreSQL-backed exact, prefix, fuzzy, and category-intent search.
+- Local PostgreSQL-backed exact, prefix, fuzzy, category-intent, and controlled service-intent search.
 - Search-result map mode that focuses discovery while preserving normal place browsing when cleared.
 - Provider profiles with physical locations, normalized service offerings, and source provenance.
 - Fully local runtime after the source data has been downloaded and imported.
@@ -109,11 +109,12 @@ See [place data and provenance](docs/PLACES_DATA.md).
 
 ## Vilnius search and discovery
 
-Milestone 3 makes the map search box query only the trusted `app.places` catalogue through the local
-FastAPI/PostgreSQL stack. Search supports exact, prefix, partial, and lightweight typo-tolerant name
-matching plus a small documented set of category aliases. Recognized category terms discover the
-matching taxonomy even when names do not contain the term; specific brand queries retain name-first
-ranking. While results are active, a dedicated MapLibre source replaces unrelated viewport POIs so
+Milestone 3 makes place and category discovery query the trusted `app.places` catalogue through the
+local FastAPI/PostgreSQL stack. Milestone 4 adds a small controlled alias map for service discovery
+through normalized provider offerings. Search supports exact, prefix, partial, and lightweight
+typo-tolerant names; taxonomy categories; and service terms such as `car repair`, `haircut`, and
+`spa`. Specific brand queries retain name-first ranking. While results are active, a dedicated
+MapLibre source replaces unrelated viewport POIs so
 the map shows the search context. Selecting a result moves the map to zoom 16 and reuses the existing
 place-details card or mobile bottom sheet. See
 [search architecture and behavior](docs/SEARCH.md).

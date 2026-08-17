@@ -75,8 +75,15 @@ view with a provider profile in the same desktop card or mobile bottom sheet. Ba
 place; close dismisses the whole detail flow. Only available contact fields render. Services are
 grouped by category, and locations retain their source place names and addresses.
 
-Milestone 3 search continues to search `app.places`. Selecting a search result naturally reaches its
-provider profile through place details; provider/service full-text search is not part of Milestone 4.
+Ordinary brand/place and category searches continue to search `app.places`. A small exact alias map
+classifies known service terms and joins active service types, provider offerings, provider locations,
+and places. Service results explain the matched service and open the existing provider profile at the
+selected location; they do not create a second profile UI. This is controlled service discovery, not
+general provider/service full-text search.
+
+The current catalogue has `massage` but no dedicated spa/wellness service. Consequently `spa` maps
+narrowly to `massage`. It never falls through to arbitrary place-name substrings such as `spauda` or
+`Spartuko`; unsupported known service terms return an honest empty result.
 
 ## Validation and current measurements
 

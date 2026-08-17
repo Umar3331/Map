@@ -11,6 +11,9 @@ import {
 
 const gym = {
   id: 2294,
+  result_type: 'place' as const,
+  provider_id: null,
+  place_id: 2294,
   name: 'Lemon gym',
   category: 'fitness' as const,
   subcategory: 'fitness_centre',
@@ -18,6 +21,19 @@ const gym = {
   longitude: 25.28,
   address_line: null,
   distance_m: 300,
+  matched_service: null,
+}
+
+const repairProvider = {
+  ...gym,
+  id: 220,
+  place_id: 220,
+  provider_id: 120,
+  result_type: 'provider_service' as const,
+  name: '12Boksas',
+  category: 'automotive' as const,
+  subcategory: 'car_repair',
+  matched_service: { code: 'vehicle_repair', name: 'Vehicle repair' },
 }
 
 it('installs native unclustered search result and selected layers', () => {
@@ -60,4 +76,26 @@ it('activates search markers, hides normal POIs, selects a result, and restores 
     expect(setLayoutProperty).toHaveBeenCalledWith(layerId, 'visibility', 'visible')
   }
   expect(setLayoutProperty).toHaveBeenCalledWith(searchLayerIds.points, 'visibility', 'none')
+})
+
+it('puts provider and matched-service context on service map features', () => {
+  const setData = vi.fn()
+  const map = {
+    getSource: vi.fn(() => ({ setData })),
+    getLayer: vi.fn(() => ({})),
+    setLayoutProperty: vi.fn(),
+    setFilter: vi.fn(),
+  } as never
+
+  updateSearchResults(map, [repairProvider])
+  expect(setData).toHaveBeenCalledWith(expect.objectContaining({
+    features: [expect.objectContaining({
+      id: repairProvider.place_id,
+      properties: expect.objectContaining({
+        result_type: 'provider_service',
+        provider_id: repairProvider.provider_id,
+        matched_service: 'vehicle_repair',
+      }),
+    })],
+  }))
 })

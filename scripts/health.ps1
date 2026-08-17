@@ -16,6 +16,14 @@ if ($Search.query -ne 'maxima' -or $Search.meta.returned -ne 1 `
     -or $Search.results.Count -ne 1 -or $Search.results[0].name -notmatch '^Maxima') {
     throw 'Map search endpoint returned unexpected data.'
 }
+$SpaSearch = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/search?q=spa&limit=10" -TimeoutSec 10
+if ($SpaSearch.meta.intent -ne 'service' -or $SpaSearch.results.Count -lt 1 -or
+    @($SpaSearch.results | Where-Object {
+        $_.result_type -ne 'provider_service' -or $_.matched_service.code -ne 'massage' -or
+        $_.name -match 'Lietuvos spauda|Spartuko kebabai'
+    }).Count -gt 0) {
+    throw 'Map service-aware search endpoint returned unexpected data.'
+}
 $ProviderSearch = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/search?q=gym&limit=1" -TimeoutSec 10
 $ProviderPlaceId = $ProviderSearch.results[0].id
 $PlaceProviders = Invoke-RestMethod -Uri "http://${HostName}:${Port}/api/v1/places/${ProviderPlaceId}/providers" -TimeoutSec 10

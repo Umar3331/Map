@@ -8,6 +8,7 @@ from unicodedata import normalize as unicode_normalize
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.places import PLACE_CATEGORIES, get_places_repository
+from app.providers import ProvidersRepository, get_providers_repository
 
 router = APIRouter(prefix="/api/v1/search", tags=["search"])
 
@@ -32,6 +33,27 @@ SEARCH_ALIASES = {
     "pharmacy": SearchAlias(subcategories=("pharmacy",)),
     "restaurant": SearchAlias(subcategories=("restaurant",)),
     "supermarket": SearchAlias(subcategories=("supermarket",)),
+}
+
+# Exact, intentionally small aliases for the current service catalogue. Empty tuples are
+# recognized service intents whose service type is not yet modelled; they must not fall back to
+# arbitrary place-name substrings.
+SERVICE_ALIASES: dict[str, tuple[str, ...]] = {
+    "beauty": ("beauty_treatment",),
+    "car repair": ("vehicle_repair",),
+    "dental": ("dental_checkup", "teeth_cleaning"),
+    "dentist": ("dental_checkup", "teeth_cleaning"),
+    "gym": ("gym_membership", "group_fitness"),
+    "haircut": ("haircut",),
+    "hairdresser": ("haircut", "hair_styling"),
+    "manicure": (),
+    "massage": ("massage",),
+    "oil change": (),
+    "pedicure": (),
+    "personal training": (),
+    "spa": ("massage",),
+    "tyre service": ("tyre_service",),
+    "vehicle repair": ("vehicle_repair",),
 }
 
 
@@ -74,6 +96,7 @@ def search_places(
     latitude: float | None = Query(default=None, ge=-90, le=90),
     longitude: float | None = Query(default=None, ge=-180, le=180),
     repository: SearchRepository = Depends(get_places_repository),
+    providers_repository: ProvidersRepository = Depends(get_providers_repository),
 ) -> dict[str, Any]:
     query = normalize_search_text(q)
     if len(query) < 2:
@@ -97,7 +120,31 @@ def search_places(
         )
 
     # A literal plus is meaningful in local brands such as Gym+. Do not collapse
-    # that brand query into the generic `gym` discovery alias after normalization.
+    # that brand query into generic `gym` service discovery after normalization.
+    service_codes = None if "+" in q else SERVICE_ALIASES.get(query)
+    if service_codes is not None:
+        results = (
+            providers_repository.search_provider_services(
+                query=query,
+                service_codes=service_codes,
+                category=category,
+                west=west,
+                south=south,
+                east=east,
+                north=north,
+                latitude=latitude,
+                longitude=longitude,
+                limit=limit,
+            )
+            if service_codes
+            else []
+        )
+        return {
+            "query": query,
+            "results": results,
+            "meta": {"returned": len(results), "intent": "service"},
+        }
+
     alias = None if "+" in q else resolve_search_alias(query)
     results = repository.search_places(
         query=query,
@@ -113,8 +160,18 @@ def search_places(
         longitude=longitude,
         limit=limit,
     )
+    place_results = [
+        {
+            **result,
+            "result_type": "place",
+            "provider_id": None,
+            "place_id": result["id"],
+            "matched_service": None,
+        }
+        for result in results
+    ]
     return {
         "query": query,
-        "results": results,
-        "meta": {"returned": len(results), "intent": "category" if alias else "name"},
+        "results": place_results,
+        "meta": {"returned": len(place_results), "intent": "category" if alias else "name"},
     }

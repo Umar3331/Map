@@ -168,3 +168,14 @@ exact source identity and one provider per source place until reliable entity re
 **Consequences:** Address and geometry stay on places; provider provenance and lifecycle are durable;
 multi-location grouping is structurally possible but deliberately not inferred from names. Prices,
 durations, verification, claims, availability, booking, and provider management remain unimplemented.
+
+## ADR-025 — Controlled service intent extends local search
+**Status:** Accepted. **Context:** Once normalized provider offerings exist, a short query such as
+`spa` is usually service intent; treating it as a weak place-name substring ranks unrelated names
+such as `Lietuvos spauda`. **Decision:** Keep the existing endpoint and classify exact terms into
+place/brand, place-category, or service intent. Service aliases map only to existing service-type
+codes and query active providers, offerings, locations, and places with parameterized SQL. Known but
+unsupported services return an empty service result instead of falling back to name substrings.
+**Consequences:** Search remains local and deterministic, service results explain why they matched,
+and selection reuses the existing map and provider profile. The alias catalogue is intentionally
+small; general provider full-text search and service inference remain deferred.

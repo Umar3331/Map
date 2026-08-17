@@ -1,7 +1,9 @@
 # Search and discovery
 
 Milestone 3 provides local Vilnius place discovery over the application-owned `app.places` table.
-It never queries the replaceable `osm.*` basemap tables or an external search provider.
+Milestone 4 adds controlled service intent over `app.providers`, `app.service_types`,
+`app.provider_services`, and `app.provider_locations`. Search never queries the replaceable `osm.*`
+basemap tables or an external provider.
 
 ## API
 
@@ -14,25 +16,29 @@ It never queries the replaceable `osm.*` basemap tables or an external search pr
 - `latitude`, `longitude` — optional all-or-none map-centre distance context.
 
 Bounds are not a hard filter. A user can find a place elsewhere inside the imported Vilnius scope.
-The compact response contains `id`, name, category, subcategory, coordinates, optional address, and
-optional rounded distance. Full details and provenance remain at `GET /api/v1/places/{id}`.
+The compact response contains place geography plus `result_type`, `place_id`, optional `provider_id`,
+and optional `matched_service`. Full place and provider details remain in their dedicated endpoints.
 
 ```json
 {
-  "query": "coffee",
+  "query": "spa",
   "results": [
     {
       "id": 123,
-      "name": "Coffee Inn",
-      "category": "food_drink",
-      "subcategory": "cafe",
+      "place_id": 123,
+      "provider_id": 456,
+      "result_type": "provider_service",
+      "name": "Azia SPA",
+      "category": "shopping",
+      "subcategory": "massage",
       "latitude": 54.687,
       "longitude": 25.28,
       "address_line": "Gedimino pr. 1",
-      "distance_m": 240
+      "distance_m": 240,
+      "matched_service": { "code": "massage", "name": "Massage" }
     }
   ],
-  "meta": { "returned": 1, "intent": "category" }
+  "meta": { "returned": 1, "intent": "service" }
 }
 ```
 
@@ -46,7 +52,7 @@ structurally incomplete geographic parameters.
 
 ## Intent and ranking
 
-The response reports `meta.intent` as `name` or `category`.
+The response reports `meta.intent` as `name`, `category`, or `service`.
 
 Ordinary name/brand intent uses exact normalized name, prefix, strong trigram similarity, substring,
 and weaker trigram tiers. Viewport membership and distance break equivalent text ties, followed by
@@ -59,6 +65,13 @@ relationships can improve results inside that taxonomy, then viewport, distance,
 and ID provide deterministic ordering. A literal `+` is treated as meaningful brand punctuation,
 so `Gym+` stays name intent instead of becoming generic `gym` discovery.
 
+A recognized service alias takes priority over place-name substring matching. Its candidates come
+only from active provider offerings at active provider locations and places. Exact service-code
+order is followed by provider name relationship, viewport membership, distance, normalized provider
+name, provider ID, and place ID. Selecting a service result focuses its provider location and opens
+the existing provider profile directly; Back returns to its place details. Thus `spa` cannot match
+`Lietuvos spauda` or `Spartuko kebabai` merely because their names contain those letters.
+
 ## Category aliases and typos
 
 The explicit alias set is intentionally small:
@@ -67,11 +80,9 @@ The explicit alias set is intentionally small:
 | --- | --- |
 | `bank` | subcategory `bank` |
 | `cafe`, `coffee` | subcategory `cafe` |
-| `car repair` | subcategory `car_repair` |
 | `food` | category `food_drink` |
 | `groceries`, `supermarket` | subcategory `supermarket` |
-| `gym` | subcategory `fitness_centre` |
-| `hair`, `hairdresser` | subcategory `hairdresser` |
+| `hair` | subcategory `hairdresser` |
 | `hotel` | subcategory `hotel` |
 | `pharmacy` | subcategory `pharmacy` |
 | `restaurant` | subcategory `restaurant` |
@@ -79,6 +90,25 @@ The explicit alias set is intentionally small:
 Name typos use PostgreSQL trigram similarity. Alias terms of four or more characters also accept a
 conservative similarity ratio of 0.78, enabling examples such as `resturant` and `pharmcy` without a
 large synonym engine.
+
+Service aliases are exact and deliberately controlled:
+
+| Query | Existing service type codes |
+| --- | --- |
+| `beauty` | `beauty_treatment` |
+| `car repair`, `vehicle repair` | `vehicle_repair` |
+| `dental`, `dentist` | `dental_checkup`, `teeth_cleaning` |
+| `gym` | `gym_membership`, `group_fitness` |
+| `haircut` | `haircut` |
+| `hairdresser` | `haircut`, `hair_styling` |
+| `massage`, `spa` | `massage` |
+| `tyre service` | `tyre_service` |
+
+`spa` is intentionally narrow: the current catalogue has no dedicated spa/wellness type, so it maps
+only to providers with the trustworthy `massage` assignment, not generic beauty businesses or names
+containing `spa`. Known but currently unsupported terms `manicure`, `oil change`, `pedicure`, and
+`personal training` are still classified as service intent and return an honest empty result rather
+than falling back to unrelated name substrings.
 
 ## Indexes and performance
 
@@ -99,12 +129,14 @@ On the Windows reference database with 4,724 active places, warm `EXPLAIN ANALYZ
 | category `restaurant` | 0.273 ms | indexed ordered scan/filter |
 | category-intent `gym` candidate set | 0.221 ms | subcategory B-tree |
 | centre-biased `cafe` | 9.442 ms | subcategory B-tree plus distance sort |
+| service-intent `spa` | 0.407 ms | service-type and provider-location indexes |
 
 Warm same-origin API medians through Caddy at `127.0.0.1:5173` were 14.17–16.52 ms across exact,
 prefix, fuzzy, category, and viewport-biased queries. Measurements vary with hardware, Docker state,
 cache warmth, and network name resolution.
-The intent-aware, centre-biased `gym` endpoint measured a 3.49 ms median over 20 additional warm
-same-origin requests (3.30 ms minimum and 5.99 ms maximum).
+The service-intent `spa` endpoint measured a 6.15 ms median over 20 warm same-origin requests
+(5.66 ms minimum and 7.73 ms maximum). The earlier centre-biased `gym` place query measurement is
+retained as historical Milestone 3 evidence; `gym` is now controlled service intent.
 
 ## Browser behavior
 
@@ -121,7 +153,9 @@ empty, error, and truncation messages are suppressed while search results own th
 
 ## Known limitations
 
-- Search is limited to the imported Vilnius `app.places` snapshot and its current names/categories.
+- Search is limited to the imported Vilnius place/provider snapshot and its curated service catalogue.
+- Service aliases do not infer offerings from provider names; missing catalogue types intentionally
+  return no providers until trustworthy taxonomy-backed assignments exist.
 - There is no transliteration, Lithuanian stemming, multilingual synonym corpus, autocomplete
   analytics, personalization, ratings, recommendations, or semantic/AI interpretation.
 - Trigram matching is deliberately conservative and may miss severe misspellings.

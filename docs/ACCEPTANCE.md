@@ -140,4 +140,10 @@ Milestone 3 physical-iPhone acceptance passed on 2026-08-17.
   live database validation, health checks, and production Playwright tests pass.
 - [x] Desktop and 390-by-844 Windows production-browser checks pass with no horizontal overflow,
   console errors, worker/MIME errors, or external runtime origins.
+- [x] Search distinguishes place/brand, place-category, and controlled service intent; service
+  results carry provider/location identity and the matched normalized service.
+- [x] `spa` returns only trusted massage-provider offerings and never `Lietuvos spauda` or
+  `Spartuko kebabai` because of a place-name substring.
+- [x] `car repair` returns vehicle-repair providers; selecting a service result focuses its location
+  and opens the existing provider profile on desktop and at 390 by 844.
 - [ ] Physical-iPhone provider/service interaction acceptance remains for the user.

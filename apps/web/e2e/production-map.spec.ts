@@ -250,7 +250,7 @@ test('desktop search ranks, navigates, opens existing details, and clears', asyn
   expect(screenshot.byteLength).toBeGreaterThan(50_000)
 })
 
-test('desktop gym discovery uses taxonomy and an uncluttered search map mode', async ({ page }, testInfo) => {
+test('desktop restaurant discovery uses taxonomy and an uncluttered search map mode', async ({ page }, testInfo) => {
   const runtimeErrors: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'error') runtimeErrors.push(message.text())
@@ -263,17 +263,17 @@ test('desktop gym discovery uses taxonomy and an uncluttered search map mode', a
   const input = page.getByRole('combobox', { name: 'Search Vilnius' })
   const searchResponse = page.waitForResponse((response) => (
     response.url().includes('/api/v1/search?')
-      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'gym'
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'restaurant'
   ))
-  await input.fill('gym')
+  await input.fill('restaurant')
   const payload = await (await searchResponse).json() as {
     results: Array<{ id: number; name: string; subcategory: string }>
     meta: { returned: number; intent: string }
   }
   expect(payload.meta.intent).toBe('category')
   expect(payload.results.length).toBeGreaterThan(2)
-  expect(payload.results.every((result) => result.subcategory === 'fitness_centre')).toBe(true)
-  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/gym/i.test(result.name))
+  expect(payload.results.every((result) => result.subcategory === 'restaurant')).toBe(true)
+  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/restaurant/i.test(result.name))
   expect(taxonomyOnlyIndex).toBeGreaterThanOrEqual(0)
 
   await expect(map).toHaveAttribute('data-search-mode', 'active')
@@ -282,7 +282,7 @@ test('desktop gym discovery uses taxonomy and an uncluttered search map mode', a
   await expect(map).toHaveAttribute('data-search-layers', /app-search-result-points/)
   await expect(page.getByText('Zoom in to see all places')).not.toBeVisible()
   const activeScreenshot = await page.screenshot({
-    path: testInfo.outputPath('vilnius-gym-search-active-desktop.png'),
+    path: testInfo.outputPath('vilnius-restaurant-search-active-desktop.png'),
   })
   expect(activeScreenshot.byteLength).toBeGreaterThan(50_000)
 
@@ -293,7 +293,7 @@ test('desktop gym discovery uses taxonomy and an uncluttered search map mode', a
   const panel = page.getByRole('dialog', { name: 'Place details' })
   await expect(panel.getByRole('heading', { level: 1 })).toHaveText(chosen.name)
   const selectedScreenshot = await page.screenshot({
-    path: testInfo.outputPath('vilnius-gym-search-selected-desktop.png'),
+    path: testInfo.outputPath('vilnius-restaurant-search-selected-desktop.png'),
   })
   expect(selectedScreenshot.byteLength).toBeGreaterThan(50_000)
 
@@ -304,7 +304,7 @@ test('desktop gym discovery uses taxonomy and an uncluttered search map mode', a
   await expect(panel).not.toBeVisible()
   expect(runtimeErrors).toEqual([])
 
-  const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-gym-search-mode-desktop.png') })
+  const screenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-restaurant-search-mode-desktop.png') })
   expect(screenshot.byteLength).toBeGreaterThan(50_000)
 })
 
@@ -322,26 +322,26 @@ test('mobile search transitions cleanly into the existing details sheet', async 
   const input = page.getByRole('combobox', { name: 'Search Vilnius' })
   const searchResponse = page.waitForResponse((response) => (
     response.url().includes('/api/v1/search?')
-      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'gym'
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'restaurant'
   ))
-  await input.fill('gym')
+  await input.fill('restaurant')
   const payload = await (await searchResponse).json() as {
     results: Array<{ id: number; name: string; subcategory: string }>
     meta: { intent: string }
   }
   expect(payload.meta.intent).toBe('category')
-  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/gym/i.test(result.name))
+  const taxonomyOnlyIndex = payload.results.findIndex((result) => !/restaurant/i.test(result.name))
   expect(taxonomyOnlyIndex).toBeGreaterThanOrEqual(0)
   await expect(map).toHaveAttribute('data-search-mode', 'active')
   await expect(map).toHaveAttribute('data-normal-places-visible', 'false')
   await expect(page.getByText('Zoom in to see all places')).not.toBeVisible()
   const activeScreenshot = await page.screenshot({
-    path: testInfo.outputPath('vilnius-gym-search-active-mobile.png'),
+    path: testInfo.outputPath('vilnius-restaurant-search-active-mobile.png'),
   })
   expect(activeScreenshot.byteLength).toBeGreaterThan(50_000)
   const firstResult = page.getByRole('option').nth(taxonomyOnlyIndex)
   await expect(firstResult).toBeVisible()
-  await expect(firstResult).toContainText(/Fitness Centre/i)
+  await expect(firstResult).toContainText(/Restaurant/i)
   const resultBox = await firstResult.boundingBox()
   if (!resultBox) throw new Error('Mobile search result has no rendered bounds')
   expect(resultBox.height).toBeGreaterThanOrEqual(68)
@@ -357,7 +357,7 @@ test('mobile search transitions cleanly into the existing details sheet', async 
   expect(panelBox.y + panelBox.height).toBeGreaterThan(820)
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   const selectedScreenshot = await page.screenshot({
-    path: testInfo.outputPath('vilnius-gym-search-selected-mobile.png'),
+    path: testInfo.outputPath('vilnius-restaurant-search-selected-mobile.png'),
   })
   expect(selectedScreenshot.byteLength).toBeGreaterThan(50_000)
 
@@ -383,7 +383,7 @@ test('provider-backed places open service profiles and return to place details',
 
   await page.goto('/', { waitUntil: 'load' })
   const input = page.getByRole('combobox', { name: 'Search Vilnius' })
-  await input.fill('gym')
+  await input.fill('Lemon Gym')
   await expect(page.getByRole('option').first()).toBeVisible()
   await page.getByRole('option').first().click()
 
@@ -412,16 +412,76 @@ test('provider-backed places open service profiles and return to place details',
   await page.getByRole('button', { name: 'Close place details' }).click()
   await page.getByRole('button', { name: 'Clear search' }).click()
 
+  expect(runtimeErrors).toEqual([])
+  const origin = new URL(page.url()).origin
+  expect([...new Set(runtimeUrls.map((url) => new URL(url).origin))]).toEqual([origin])
+})
+
+test('service intent discovers providers without place-name substring false positives', async ({ page }, testInfo) => {
+  const runtimeErrors: string[] = []
+  const runtimeUrls: string[] = []
+  page.on('request', (request) => {
+    if (/^https?:/.test(request.url())) runtimeUrls.push(request.url())
+  })
+  page.on('console', (message) => {
+    if (message.type() === 'error') runtimeErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => runtimeErrors.push(error.message))
+
+  await page.goto('/', { waitUntil: 'load' })
+  const map = page.locator('.map-canvas')
+  const input = page.getByRole('combobox', { name: 'Search Vilnius' })
+
+  const repairResponse = page.waitForResponse((response) => (
+    response.url().includes('/api/v1/search?')
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'car repair'
+  ))
   await input.fill('car repair')
-  await expect(page.getByRole('option').first()).toContainText(/Car Repair/i)
+  const repairPayload = await (await repairResponse).json() as {
+    results: Array<{ id: number; result_type: string; matched_service: { code: string; name: string } }>
+    meta: { intent: string }
+  }
+  expect(repairPayload.meta.intent).toBe('service')
+  expect(repairPayload.results.length).toBeGreaterThan(2)
+  expect(repairPayload.results.every((result) => (
+    result.result_type === 'provider_service'
+      && result.matched_service.code === 'vehicle_repair'
+  ))).toBe(true)
+  await expect(page.getByRole('option').first()).toContainText('Vehicle repair · Service provider')
+  await expect(map).toHaveAttribute('data-search-mode', 'active')
+  await expect(map).toHaveAttribute('data-normal-places-visible', 'false')
   await page.getByRole('option').first().click()
-  const secondPlacePanel = page.getByRole('dialog', { name: 'Place details' })
-  await expect(secondPlacePanel.getByRole('heading', { name: 'Provider' })).toBeVisible()
-  await secondPlacePanel.locator('.provider-summary').first().click()
-  const secondProviderPanel = page.getByRole('dialog', { name: 'Provider profile' })
-  await expect(secondProviderPanel.getByText('Vehicle repair')).toBeVisible()
+  const repairProfile = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(repairProfile.getByText('Vehicle repair')).toBeVisible()
+  await expect(map).toHaveAttribute('data-search-selected-place-id', String(repairPayload.results[0].id))
   await page.getByRole('button', { name: 'Close provider profile' }).click()
-  await expect(secondProviderPanel).not.toBeVisible()
+  await page.getByRole('button', { name: 'Clear search' }).click()
+
+  const spaResponse = page.waitForResponse((response) => (
+    response.url().includes('/api/v1/search?')
+      && new URL(response.url()).searchParams.get('q')?.toLowerCase() === 'spa'
+  ))
+  await input.fill('spa')
+  const spaPayload = await (await spaResponse).json() as {
+    results: Array<{ name: string; result_type: string; matched_service: { code: string; name: string } }>
+    meta: { intent: string }
+  }
+  expect(spaPayload.meta.intent).toBe('service')
+  expect(spaPayload.results.length).toBeGreaterThan(0)
+  expect(spaPayload.results.every((result) => (
+    result.result_type === 'provider_service' && result.matched_service.code === 'massage'
+  ))).toBe(true)
+  expect(spaPayload.results.some((result) => /Lietuvos spauda|Spartuko kebabai/i.test(result.name))).toBe(false)
+  await expect(page.getByRole('option').first()).toContainText('Massage · Service provider')
+  const spaScreenshot = await page.screenshot({ path: testInfo.outputPath('vilnius-spa-service-search-desktop.png') })
+  expect(spaScreenshot.byteLength).toBeGreaterThan(50_000)
+  await page.getByRole('button', { name: 'Clear search' }).click()
+
+  await input.fill('haircut')
+  await expect(page.getByRole('option').first()).toContainText('Haircut · Service provider')
+  await page.getByRole('option').first().click()
+  const haircutProfile = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(haircutProfile.getByText('Haircut')).toBeVisible()
 
   expect(runtimeErrors).toEqual([])
   const origin = new URL(page.url()).origin
@@ -438,7 +498,7 @@ test('provider profile is usable in an iPhone-sized bottom sheet', async ({ page
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/', { waitUntil: 'load' })
   const input = page.getByRole('combobox', { name: 'Search Vilnius' })
-  await input.fill('gym')
+  await input.fill('Lemon Gym')
   await expect(page.getByRole('option').first()).toBeVisible()
   await page.getByRole('option').first().click()
   const placePanel = page.getByRole('dialog', { name: 'Place details' })
@@ -462,5 +522,20 @@ test('provider profile is usable in an iPhone-sized bottom sheet', async ({ page
   await page.getByRole('button', { name: 'Back to place details' }).click()
   await expect(placePanel).toBeVisible()
   await page.getByRole('button', { name: 'Close place details' }).click()
+
+  await page.getByRole('button', { name: 'Clear search' }).click()
+  await input.fill('car repair')
+  await expect(page.getByRole('option').first()).toContainText('Vehicle repair · Service provider')
+  const serviceResultBox = await page.getByRole('option').first().boundingBox()
+  if (!serviceResultBox) throw new Error('Mobile service result has no rendered bounds')
+  expect(serviceResultBox.height).toBeGreaterThanOrEqual(68)
+  await page.getByRole('option').first().click()
+  const serviceProviderPanel = page.getByRole('dialog', { name: 'Provider profile' })
+  await expect(serviceProviderPanel.getByText('Vehicle repair')).toBeVisible()
+  const servicePanelBox = await serviceProviderPanel.boundingBox()
+  if (!servicePanelBox) throw new Error('Mobile service provider profile has no rendered bounds')
+  expect(servicePanelBox.x).toBeGreaterThanOrEqual(0)
+  expect(servicePanelBox.x + servicePanelBox.width).toBeLessThanOrEqual(390)
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   expect(runtimeErrors).toEqual([])
 })

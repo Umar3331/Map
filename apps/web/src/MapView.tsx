@@ -57,6 +57,23 @@ export function MapView({ config }: MapViewProps) {
     updateSearchResultsRef.current(results)
   }, [])
 
+  const openProvider = useCallback(async (providerId: number) => {
+    providerProfileControllerRef.current?.abort()
+    const controller = new AbortController()
+    providerProfileControllerRef.current = controller
+    setProviderView({ status: 'loading' })
+    try {
+      const [provider, services] = await Promise.all([
+        loadProviderProfile(providerId, controller.signal),
+        loadProviderServices(providerId, controller.signal),
+      ])
+      setProviderView({ status: 'ready', provider, services })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setProviderView({ status: 'error' })
+    }
+  }, [])
+
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -131,6 +148,7 @@ export function MapView({ config }: MapViewProps) {
       placeId: number,
       coordinates: [number, number],
       fromSearch: boolean,
+      serviceProviderId?: number,
     ) => {
       mapContainer.dataset.selectedPlaceId = String(placeId)
       if (fromSearch) {
@@ -158,7 +176,10 @@ export function MapView({ config }: MapViewProps) {
       setProviderView(null)
       try {
         const details = await loadPlaceDetails(placeId, detailsController.signal)
-        if (!disposed) setSelectedPlace(details)
+        if (!disposed) {
+          setSelectedPlace(details)
+          if (serviceProviderId !== undefined) void openProvider(serviceProviderId)
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
         if (!disposed) setPlacesStatus('error')
@@ -176,7 +197,14 @@ export function MapView({ config }: MapViewProps) {
     }
 
     selectPlaceRef.current = (result) => {
-      void selectPlace(result.id, [result.longitude, result.latitude], true)
+      void selectPlace(
+        result.place_id,
+        [result.longitude, result.latitude],
+        true,
+        result.result_type === 'provider_service' && result.provider_id !== null
+          ? result.provider_id
+          : undefined,
+      )
     }
 
     const applySearchResults = (results: SearchResult[]) => {
@@ -277,9 +305,15 @@ export function MapView({ config }: MapViewProps) {
     map.on('click', searchLayerIds.points, async (event) => {
       const feature = event.features?.[0]
       const placeId = Number(feature?.properties?.id ?? feature?.id)
+      const providerId = Number(feature?.properties?.provider_id)
       if (!Number.isFinite(placeId) || feature?.geometry.type !== 'Point') return
       const coordinates = feature.geometry.coordinates as [number, number]
-      await selectPlace(placeId, coordinates, true)
+      await selectPlace(
+        placeId,
+        coordinates,
+        true,
+        Number.isFinite(providerId) && providerId > 0 ? providerId : undefined,
+      )
     })
     for (const layer of [placeLayerIds.clusters, placeLayerIds.points, searchLayerIds.points]) {
       map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer' })
@@ -298,7 +332,7 @@ export function MapView({ config }: MapViewProps) {
       mapRef.current = null
       map.remove()
     }
-  }, [config])
+  }, [config, openProvider])
 
   const closeDetails = () => {
     const map = mapRef.current
@@ -316,23 +350,6 @@ export function MapView({ config }: MapViewProps) {
     setPlaceProviders([])
     setProvidersStatus('ready')
     setSelectedPlace(null)
-  }
-
-  const openProvider = async (providerId: number) => {
-    providerProfileControllerRef.current?.abort()
-    const controller = new AbortController()
-    providerProfileControllerRef.current = controller
-    setProviderView({ status: 'loading' })
-    try {
-      const [provider, services] = await Promise.all([
-        loadProviderProfile(providerId, controller.signal),
-        loadProviderServices(providerId, controller.signal),
-      ])
-      setProviderView({ status: 'ready', provider, services })
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return
-      setProviderView({ status: 'error' })
-    }
   }
 
   const clearSearchSelection = () => {
